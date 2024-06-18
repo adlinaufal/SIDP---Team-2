@@ -1,0 +1,43 @@
+import cv2
+import pickle as pkl
+import face_recognition
+
+cap = cv2.VideoCapture(0)
+cap.set(3, 1280)
+cap.set(4, 720)
+#VideoCapture(0)= For internal webcam
+#VideoCapture(1)= For external webcam
+
+
+#Load Encoding file
+file = open("EncodedFile.p","rb")
+encodeListKnown_withID = pkl.load(file)
+encodeListKnown, individual_ID = encodeListKnown_withID
+file.close()
+
+print(individual_ID)# to check id's loaded
+
+while(True): 
+    
+    success, img = cap.read()
+
+    imgS = cv2.resize(img, (0,0), None, 0.25, 0.25)
+    imgS = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
+    faceCurFrame = face_recognition.face_locations(imgS)
+    encodeCurFrame = face_recognition.face_encodings(imgS, faceCurFrame)
+  
+    for encodeFace,faceLoc in zip(encodeCurFrame, faceCurFrame):
+        matches = face_recognition.compare_faces(encodeListKnown, encodeFace)
+        faceDis = face_recognition.face_distance(encodeListKnown, encodeFace)
+        print("Matches", matches)
+        print("faceDis", faceDis)
+
+
+    cv2.imshow("Face Capture",img)
+
+    if cv2.waitKey(1) & 0xFF == ord('q'): 
+        break
+
+cap.release() 
+cv2.destroyAllWindows() 
