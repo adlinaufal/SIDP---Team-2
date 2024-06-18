@@ -4,8 +4,11 @@ import pickle as pkl
 import os
 
 #Importing images
-folderPath = 'C:/UNISTUDIES/FINAL YEAR 1ST SEMESTER/SIDP/Facial Recognition/SIDP Face Recognition/images'
+absolute_path = os.path.dirname(__file__)
+relative_path = "images"
+folderPath = os.path.join(absolute_path, relative_path)
 PathList = os.listdir(folderPath)
+
 imgList = []
 individual_ID=[]
 
