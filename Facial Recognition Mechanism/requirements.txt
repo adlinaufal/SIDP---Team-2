@@ -1,0 +1,6 @@
+cmake
+dlib
+pandas
+cv2
+face_recognition
+pickle

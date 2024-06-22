@@ -14,7 +14,6 @@ of the input picture.
 The face_rec() function is responsible for facial recognition mechanism
 """
 
-
 if __name__ == "__main__":
 
     t1 = threading.Thread(target = img_encoder(), name= "thread 1")
