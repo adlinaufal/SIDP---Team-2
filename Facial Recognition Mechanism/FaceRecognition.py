@@ -2,6 +2,7 @@ import cv2
 import pickle as pkl
 import face_recognition
 import numpy as np
+import os
 
 def face_rec():
     frame_count = 0
@@ -10,7 +11,8 @@ def face_rec():
     video_capture.set(4, 500)
 
     #Load Encoding file
-    file = open("EncodedFile.p","rb")
+    absolute_path = os.path.dirname(__file__)
+    file = open(absolute_path + "//" + "EncodedFile.p","rb")
     encodeListKnown_withID = pkl.load(file)
     encodeListKnown, individual_ID = encodeListKnown_withID
     file.close()

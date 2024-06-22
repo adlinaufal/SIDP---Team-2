@@ -33,7 +33,7 @@ def img_encoder():
     encodeListKnown_withID = [encodeListKnown, individual_ID]
     print("Encoding Complete")
 
-    file = open("EncodedFile.p", "wb")
+    file = open(absolute_path + "//" "EncodedFile.p", "wb")
     pkl.dump(encodeListKnown_withID,file)
     file.close()
     print("File Saved")
