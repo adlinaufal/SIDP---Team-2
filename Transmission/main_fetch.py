@@ -1,9 +1,9 @@
-import fetch_data
-import transmission_encodegen
 import pymongo
+from pymongo.errors import ConnectionFailure
 import os
 import time
-import cv2
+import fetch_data  # Assuming fetch_data.py contains download_image_from_drive function
+import transmission_encodegen  # Assuming transmission_encodegen.py contains img_encoder function
 
 def main():
     try:
@@ -38,10 +38,10 @@ def main():
 
             # Process each document
             for item in data:
-                if 'name' in item and 'face_image' in item and 'timestamp' in item:
-                    name = item['name']
-                    image_url = item['face_image']
-                    timestamp = item['timestamp']
+                if 'Name' in item and 'Guest_Profile_Picture' in item and 'Timestamp' in item:
+                    name = item['Name']
+                    image_url = item['Guest_Profile_Picture']
+                    timestamp = item['Timestamp']
 
                     # Generate expected file name
                     file_name = f"{name.replace(' ', '_')}_{timestamp.replace(' ', '').replace('/', '').replace(':', '')}.jpg"
@@ -56,14 +56,16 @@ def main():
                         print(f"Data exist: '{file_name}'")
 
                 else:
-                    print("Missing 'name', 'face_image' or 'timestamp' field in document.")
+                    print("Missing 'Name', 'Guest_Profile_Picture' or 'Timestamp' field in document.")
                     continue
 
-            # Encode images if new images werqe downloaded
+            # Encode images if new images were downloaded
             if new_images_downloaded:
                 transmission_encodegen.img_encoder()
 
-    except KeyboardInterrupt or pymongo.errors.ConnectionFailure as e:
+    except KeyboardInterrupt:
+        print("Process interrupted by user.")
+    except ConnectionFailure as e:
         print("Failed to connect to MongoDB:", e)
     except Exception as e:
         print("An error occurred:", e)

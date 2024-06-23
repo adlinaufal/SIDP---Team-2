@@ -8,9 +8,9 @@ db = cluster["isdpData"]
 collection = db["name_image"]
 
 post = {
-"name": "tryje",
-"face_image": "https://drive.google.com/open?id=1XcNKIzvI4U3kaFGAGYJgxRknVCQpy4-n",
-"timestamp": "6/23/2024 14:31:10"
+"Name": "New Data",
+"Guest_Profile_Picture": "https://drive.google.com/open?id=1XcNKIzvI4U3kaFGAGYJgxRknVCQpy4-n",
+"Timestamp": "6/23/2024 14:31:10"
 }
 collection.insert_one(post)
 

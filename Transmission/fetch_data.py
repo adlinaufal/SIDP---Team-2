@@ -1,8 +1,3 @@
-# This Python code is taking name and Google drive link of individual image (submitted through Google Form)
-# Google Form link: https://forms.gle/pUNejqpEGKQCNFc87
-# Google Form Editor: https://docs.google.com/forms/d/e/1FAIpQLSdMC_AtGfy27_7XVPqNkB0sR-jVoZ03-tE-KXZ9NbtB_ixXNA/viewform?usp=sharing
-# Google Drive where the pictures are stored: https://drive.google.com/drive/folders/14DB1_KeYKi93TXHop5VRFAT-diAExltOBlex5jTaeVmlXBJ5JfpAEUnqgl8REkELeVuQGNn1
-
 import pymongo
 from pymongo.errors import ConnectionFailure
 import os
@@ -58,47 +53,14 @@ def create_placeholder_image(filepath):
     draw.text((10, 90), "Placeholder", fill='white', font=font)
     image.save(filepath)
 
-try:
-    # MongoDB connection details
-    username = "Exoeon1"
-    password = "adamcoolboy"
-    database_name = "isdpData"
-    coll_name = "name_image"
-    connection_string = f"mongodb+srv://{username}:{password}@isdpdb.rgnbvb0.mongodb.net/"
+# Function to process each document
+def process_document(item, images_directory):
+    if 'Name' in item and 'Guest_Profile_Picture' in item and 'Timestamp' in item:
+        name = item['Name']
+        image_url = item['Guest_Profile_Picture']
+        timestamp = item['Timestamp']
 
-    # Connect to MongoDB
-    print(f"Attempting to connect to MongoDB at {connection_string}...")
-    client = pymongo.MongoClient(connection_string)
-    print("Connected to MongoDB successfully!")
-
-    # Access the database and collection
-    db = client[database_name]
-    collection = db[coll_name]
-
-    # Fetch all documents from collection
-    data = collection.find()
-
-    # Directory to store images
-    current_directory = os.path.dirname(os.path.abspath(__file__))
-    images_directory = os.path.join(current_directory, 'images')
-    if not os.path.exists(images_directory):
-        os.makedirs(images_directory)
-
-    # Process each document
-    for item in data:
-        if 'name' in item and 'face_image' in item and 'timestamp' in item:
-            name = item['name']
-            image_url = item['face_image']
-            timestamp = item['timestamp']
-
-            # Attempt to download image from Google Drive URL and rename it
-            download_image_from_drive(image_url, images_directory, name, timestamp)
-
-        else:
-            print("Missing 'name', 'face_image' or 'timestamp' field in document.")
-            continue
-
-except ConnectionFailure as e:
-    print("Failed to connect to MongoDB:", e)
-except Exception as e:
-    print("An error occurred:", e)
+        # Attempt to download image from Google Drive URL and rename it
+        download_image_from_drive(image_url, images_directory, name, timestamp)
+    else:
+        print("Missing 'Name', 'Guest_Profile_Picture' or 'Timestamp' field in document.")
