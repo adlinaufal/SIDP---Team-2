@@ -5,7 +5,7 @@ import os
 import time
 import cv2
 
-def main():
+def fetch_encode():
     try:
         # MongoDB connection details
         username = "Exoeon1"
@@ -67,6 +67,3 @@ def main():
         print("Failed to connect to MongoDB:", e)
     except Exception as e:
         print("An error occurred:", e)
-
-if __name__ == "__main__":
-    main()
