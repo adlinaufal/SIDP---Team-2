@@ -16,7 +16,7 @@ def img_encoder():
     for path in PathList:
         imgList.append(cv2.imread(os.path.join(folderPath,path)))
         individual_ID.append(path[:-4])
-        print(individual_ID)
+        #print(individual_ID)
 
     #Creating the encodings
     def findEncodings(imagesList):
