@@ -7,6 +7,7 @@ from EncodingGenerator import img_encoder
 import multiprocessing as MP
 import threading
 
+
 """
 The img_encoder() is the function that is responsible for encoding
 of the input picture.

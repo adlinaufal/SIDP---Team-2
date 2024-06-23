@@ -5,7 +5,7 @@ import time
 import fetch_data  # Assuming fetch_data.py contains download_image_from_drive function
 import transmission_encodegen  # Assuming transmission_encodegen.py contains img_encoder function
 
-def main():
+def fetch_encode():
     try:
         # MongoDB connection details
         username = "Exoeon1"
@@ -70,5 +70,4 @@ def main():
     except Exception as e:
         print("An error occurred:", e)
 
-if __name__ == "__main__":
-    main()
+fetch_encode()
