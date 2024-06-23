@@ -22,7 +22,7 @@ def extract_file_id(url):
         raise ValueError("File ID not found in the URL")
 
 # Function to download image from Google Drive URL and rename it
-def download_image_from_drive(url, folder_path, name):
+def download_image_from_drive(url, folder_path, name, timestamp):
     try:
         file_id = extract_file_id(url)
         download_url = f"https://drive.google.com/uc?id={file_id}"
@@ -33,8 +33,11 @@ def download_image_from_drive(url, folder_path, name):
         # Replace spaces with underscores in the name
         name = name.replace(' ', '_')
 
+        # Replace spaces, slashes, and colons in the timestamp with no space
+        timestamp = timestamp.replace(' ', '').replace('/', '').replace(':', '')
+
         # Save the downloaded file with the modified name
-        file_name = os.path.join(folder_path, f"{name}.jpg")
+        file_name = os.path.join(folder_path, f"{name}_{timestamp}.jpg")
         with open(file_name, 'wb') as f:
             f.write(response.content)
 
@@ -83,15 +86,16 @@ try:
 
     # Process each document
     for item in data:
-        if 'name' in item and 'face_image' in item:
+        if 'name' in item and 'face_image' in item and 'timestamp' in item:
             name = item['name']
             image_url = item['face_image']
+            timestamp = item['timestamp']
 
             # Attempt to download image from Google Drive URL and rename it
-            download_image_from_drive(image_url, images_directory, name)
+            download_image_from_drive(image_url, images_directory, name, timestamp)
 
         else:
-            print("Missing 'name' or 'face_image' field in document.")
+            print("Missing 'name', 'face_image' or 'timestamp' field in document.")
             continue
 
 except ConnectionFailure as e:
