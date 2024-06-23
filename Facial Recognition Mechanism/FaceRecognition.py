@@ -45,4 +45,6 @@ def face_rec():
         cv2.imshow("Face video_captureture",frame)
 
     video_capture.release() 
-    cv2.destroyAllWindows() 
+    cv2.destroyAllWindows()
+
+face_rec()

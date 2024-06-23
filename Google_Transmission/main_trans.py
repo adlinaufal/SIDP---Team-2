@@ -5,7 +5,7 @@ import requests
 from datetime import datetime
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-from gtransmission_encodegen import img_encoder  # Assuming transmission_encodegen.py contains img_encoder function
+from Gtrans_enc import img_encoder  # Assuming transmission_encodegen.py contains img_encoder function
 from PIL import Image, ImageDraw, ImageFont  # PIL library for creating placeholder images
 import traceback
 
@@ -69,7 +69,7 @@ def fetch_encode():
         current_directory = os.path.dirname(os.path.abspath(__file__))
 
         # Construct the absolute path to your service account JSON file
-        SERVICE_ACCOUNT_FILE = os.path.join(current_directory, 'sidp-facialrecognition-97936b0850c8.json')
+        SERVICE_ACCOUNT_FILE = os.path.join(current_directory, 'sidp-facialrecognition-f7dcaf3d2e49.json')
 
         # Authenticate with Google Sheets using service account credentials
         scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']

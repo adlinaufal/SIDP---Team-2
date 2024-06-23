@@ -38,3 +38,4 @@ def img_encoder():
     pkl.dump(encodeListKnown_withID,file)
     file.close()
     print("File Saved")
+img_encoder()
