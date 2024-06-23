@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "sidp-facialrecognition",
+  "private_key_id": "97936b0850c8cf3a5d34edcb5a6bb838510f1a57",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDUsZ1gC30nmaLo\nW92EffxBiF0xkLrhbWfYYNWpTwa4/x7A1v7LFCsg1SbR1VhCIPrLLTcr+sPvn0aG\n68JuNuonSHNPfFh6NeHkACvFmgUnebPK5lbvDLY55K78DRzie7iuIzbHTuUblgcb\nG6clEUyfyDgglY8Cgz2kjzDlEv+bIUcz/IZijDtjH9t6NzjKj9ArlaJRnEl5uOFX\nT0BAiVBteOF+JQ2m9kcY8L+20IteCzrGqL/Brn3i0jEP9JdUfIF/FnCjRDw68Uyy\nXpNHcH3xnHZ+wfZWe9BaSlnudsuCREGdstJY7g91diywAxzwCJuEQVfkAZtjqmcS\nyVff7skRAgMBAAECggEAEI4Gjsw2IJfvuyAzXLWlpcAkaNA4C4XFeG0JFFWHU2zg\nCuhxCoN2W+bbT6fIZ9VDT/8j9TNefs8p4SSGjKePkCEugHhQNqrs+x8cSRQU5J6v\nZNKK365gnJ71E789iU9R75PkFp1Ibd4+jViYqOTwztr5q2eYqvxmFuHiT2IsLPnE\nypj/23mbd4pARP7U57FghtekJO9sbTKrANHvZa+4Tg5ZWaOXu+puEZzabHA2yqzS\nJ9c+Bb6BPsC36Px6m3hjMOJccVOR4OsaNXEyhkG5n7deFRPXaPrImeLicMGBbUvc\nEddPbqbxnKtKbUligbYfmcqxzBm4UGA/bSI/2NZ3pQKBgQDrIf9OBAuNNMtvQdMa\ndPyJ0DXgH7umhl3ZxAV0a/1bINZb1O3Wo1fh4VIt/B8vuaBRLWSLiIgPtUzre85X\nLRAvSelpaoJL5Nhex1OXIX862EszEauK+DU/7Tt7gKVFZk1egScxAlSKmO+dv2yy\nqtJ85Lf/ie5aCkV3qOqIrsoxuwKBgQDnkdLwx56YJE6CpCLH7/vzyiBsmS61SZ74\nvvQRNOX+JLQ3rBREPN982lO9YG0K/6AeT6xlwftFUDN8MjdvSAtg2TT9zWiY1lL9\nDAuJ5sutuPXVi84tS/+FgIGHLFP/uG5DCE0ieCfIodzfte3mbSDGWY/j1Gc/CSsh\nbhouPYXtowKBgFDboxkoCPTpJ+A9qaPagRG/WReWsgglAtclMp8Dl9+jnjN8OMHr\n8AfMXV9U6UCXPAtOadoV/HwyY55DOAUAiSVJ7IuExgPlUYbeUt+Q9Fi/ErUgKXaj\nvmQaZ68j4THJaWfLUDfpTjtPNm9v6ahTWAj8+k1VGHM8PwFURDr2qK+LAoGBAIfb\nPKc4ZeoaetkYVLN6LxXjAszTvdxr+dEzrlsd7sUAYZ673RP/pppIOJLFLJQkTpsZ\n4Sm9+Z27pMj7aRxnZw2FwRoZ1YC9VOjSlT5tYhdkiQ2kvOxERv/a2aMlNY60dDPt\nfdt4JNcHZ170DEOAyJa12r4uUfhgd6ZgQwnX3GgDAoGBAKH4MDJQa7ovRE+oi+nC\n4DsKWTy3PBczdD9GegaK6JSDA1KEsU1h/XKyQArAsLGN7MiSMXkuQCn6q7r/JeBW\nX8nyGc9rcAJNoVS3RIrMaWD/fnB6yWtdvqdGaO7fcat6duNCd7phiIsZFQ1n+DcZ\nlPm2MWCXbOM+iiDFEuIHwIf1\n-----END PRIVATE KEY-----\n",
+  "client_email": "nadiyatul-farhana@sidp-facialrecognition.iam.gserviceaccount.com",
+  "client_id": "108105228589218780150",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/nadiyatul-farhana%40sidp-facialrecognition.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
