@@ -67,3 +67,5 @@ def fetch_encode():
         print("Failed to connect to MongoDB:", e)
     except Exception as e:
         print("An error occurred:", e)
+
+fetch_encode()
