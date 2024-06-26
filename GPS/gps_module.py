@@ -81,9 +81,7 @@ def IsValidGpsinfo(gps):
 
 def main():
     with open(gps_data_file, 'r') as gps:
-        while True:
-            IsValidGpsinfo(gps)
-            time.sleep(1)
+        IsValidGpsinfo(gps)
 
-if __name__ == "_main_":
+if __name__ == "__main__":
     sys.exit(main())
