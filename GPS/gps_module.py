@@ -48,13 +48,6 @@ def IsValidGpsinfo(gps):
                 print("!!!!!!Positioning is invalid!!!!!!")
             else:
                 print("**The positioning type is {}D **".format(msg_list[GPGSA_dict['mode2']]))
-                print("The Satellite ID of channel {} : {}".format("N/A", "N/A"))  # Placeholder
-                # Parse the channel information of the GPGSA message.
-                for id in range(0, 12):
-                    key_name = list(GPGSA_dict.keys())[id + 3]
-                    value_id = GPGSA_dict[key_name]
-                    if not (msg_list[value_id] == ''):
-                        print(" {} : {}".format(key_name, msg_list[value_id]))
         # Parse the GPGGA message.
         if msg_list[GPGGA_dict['msg_id']] == "$GPGGA":
             print()
@@ -68,7 +61,6 @@ def IsValidGpsinfo(gps):
                         m = int(utc_str[2:4])
                         s = float(utc_str[4:])
                         print(" utc time: {}:{}:{}".format(h, m, s))
-                    print(" {} time: {} (format: hhmmss.sss)".format(key, msg_list[GPGGA_dict[key]]))
                 # Parse the latitude information.
                 elif key == "latitude":
                     lat_str = msg_list[GPGGA_dict[key]]
@@ -76,8 +68,7 @@ def IsValidGpsinfo(gps):
                         Len = len(lat_str.split(".")[0])
                         d = int(lat_str[0:Len - 2])
                         m = float(lat_str[Len - 2:])
-                        print(" latitude: {} degree {} minute".format(d, m))
-                    print(" {}: {} (format: dddmm.mmmmm)".format(key, msg_list[GPGGA_dict[key]]))
+                    print(" {}: {}".format(key, msg_list[GPGGA_dict[key]])) #(format: ddmm.mmmmm)
                 # Parse the longitude information.
                 elif key == "longitude":
                     lon_str = msg_list[GPGGA_dict[key]]
@@ -86,9 +77,7 @@ def IsValidGpsinfo(gps):
                         d = int(lon_str[0:Len - 2])
                         m = float(lon_str[Len - 2:])
                         print(" longitude: {} degree {} minute".format(d, m))
-                    print(" {}: {} (format: dddmm.mmmmm)".format(key, msg_list[GPGGA_dict[key]]))
-                else:
-                    print(" {}: {}".format(key, msg_list[GPGGA_dict[key]]))
+                    print(" {}: {}".format(key, msg_list[GPGGA_dict[key]]))  #(format: ddmm.mmmmm)
 
 def main():
     with open(gps_data_file, 'r') as gps:
