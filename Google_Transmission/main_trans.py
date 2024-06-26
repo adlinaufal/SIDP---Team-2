@@ -5,8 +5,8 @@ import requests
 from datetime import datetime
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-from Gtrans_enc import img_encoder  # Assuming transmission_encodegen.py contains img_encoder function
-from PIL import Image, ImageDraw, ImageFont  # PIL library for creating placeholder images
+from Gtrans_enc import img_encoder
+from PIL import Image, ImageDraw, ImageFont
 import traceback
 
 # Function to extract file_id from Google Drive URL
@@ -63,10 +63,20 @@ def remove_deleted_images(current_file_names, previous_file_names, folder_path):
             os.remove(file_path)
             print(f"Deleted file: {file_path}")
 
+# Function to get location from user input
+def get_location():
+    while True:
+        location = input("Enter location (latitude,longitude): ")
+        try:
+            lat, lng = map(float, location.split(','))
+            return f"{lat},{lng}"
+        except ValueError:
+            print("Invalid format. Please enter as latitude,longitude (e.g., 40.7128,-74.0060)")
+
 def fetch_encode():
     try:
-        SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1bqCo5PmQVNV7ix_kQarfSCTYC72P1c-qvrmTcu_Xb4E/edit?usp=sharing'  # Your Google Spreadsheet URL
-        SHEET_NAME = 'Form Responses 1'  # Name of the specific sheet within your Google Spreadsheet
+        SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1bqCo5PmQVNV7ix_kQarfSCTYC72P1c-qvrmTcu_Xb4E/edit?usp=sharing'
+        SHEET_NAME = 'Form Responses 1'
 
         current_directory = os.path.dirname(os.path.abspath(__file__))
         JSON_FILENAME = ""
@@ -91,7 +101,16 @@ def fetch_encode():
             current_file_names = set()
             new_images_downloaded = False
 
-            for item in data:
+            # Get the index of the "Location_coordinate" column, create it if it doesn't exist
+            headers = worksheet.row_values(1)
+            if "Location_coordinate" not in headers:
+                worksheet.add_cols(1)
+                worksheet.update_cell(1, len(headers) + 1, "Location_coordinate")
+                location_col = len(headers) + 1
+            else:
+                location_col = headers.index("Location_coordinate") + 1
+
+            for index, item in enumerate(data, start=2):  # start=2 because row 1 is headers
                 if 'Name' in item and 'Guest_Profile_Picture' in item and 'Timestamp' in item:
                     name = item['Name']
                     image_url = item['Guest_Profile_Picture']
@@ -106,6 +125,13 @@ def fetch_encode():
                     if not os.path.exists(file_path):
                         download_image_from_drive(image_url, images_directory, sanitized_name, sanitized_timestamp)
                         new_images_downloaded = True
+
+                        # Ask for location only when new data is detected
+                        location_coord = get_location()
+
+                        # Update location coordinate
+                        worksheet.update_cell(index, location_col, location_coord)
+                        print(f"Updated location for {name}: {location_coord}")
                     else:
                         print(f"Data exists: '{file_name}'")
 
@@ -123,5 +149,6 @@ def fetch_encode():
         print("Process interrupted by user.")
     except Exception as e:
         print("An error occurred:", e)
+        print(traceback.format_exc())
 
 fetch_encode()
