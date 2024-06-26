@@ -12,7 +12,7 @@ Passive Buzzer___Pin Number_____Pin Name
 
 import re
 import sys
-import serial
+import pyserial
 import time
 
 # Reference information of the GPGSA format:
@@ -162,14 +162,14 @@ def IsValidGpsinfo(gps):
                 print(" {}: {}".format(key, msg_list[GPGGA_dict[key]]))
 
 def main():
-    gps = serial.Serial(uart_port, baudrate=9600, timeout=0.5)
+    gps = pyserial.Serial(uart_port, baudrate=9600, timeout=0.5)
     while True:
         try:
             IsValidGpsinfo(gps)
-            time.sleep(1)
         except KeyboardInterrupt:
             break
-        
+        time.sleep(1)
+
     gps.close()
 
 if __name__ == "__main__":
