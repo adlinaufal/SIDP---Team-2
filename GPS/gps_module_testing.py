@@ -1,5 +1,4 @@
 import sys
-import time
 
 # Reference information of the GPGSA format.
 GPGSA_dict = {
@@ -35,6 +34,10 @@ GPGGA_dict = {
 gps_data_file = "gps_data.txt"  # Path to the file containing GPS data
 
 def IsValidGpsinfo(gps):
+    utc_time = None
+    latitude = None
+    longitude = None
+
     for data in gps:
         # Convert the data to string.
         msg_str = data.strip()
@@ -48,13 +51,6 @@ def IsValidGpsinfo(gps):
                 print("!!!!!!Positioning is invalid!!!!!!")
             else:
                 print("**The positioning type is {}D **".format(msg_list[GPGSA_dict['mode2']]))
-                print("The Satellite ID of channel {} : {}".format("N/A", "N/A"))  # Placeholder
-                # Parse the channel information of the GPGSA message.
-                for id in range(0, 12):
-                    key_name = list(GPGSA_dict.keys())[id + 3]
-                    value_id = GPGSA_dict[key_name]
-                    if not (msg_list[value_id] == ''):
-                        print(" {} : {}".format(key_name, msg_list[value_id]))
         # Parse the GPGGA message.
         if msg_list[GPGGA_dict['msg_id']] == "$GPGGA":
             print()
@@ -67,8 +63,8 @@ def IsValidGpsinfo(gps):
                         h = int(utc_str[0:2])
                         m = int(utc_str[2:4])
                         s = float(utc_str[4:])
-                        print(" utc time: {}:{}:{}".format(h, m, s))
-                    print(" {} time: {} (format: hhmmss.sss)".format(key, msg_list[GPGGA_dict[key]]))
+                        utc_time = "{}:{}:{}".format(h, m, s)
+                        print(" utc time: {}".format(utc_time))
                 # Parse the latitude information.
                 elif key == "latitude":
                     lat_str = msg_list[GPGGA_dict[key]]
@@ -76,8 +72,8 @@ def IsValidGpsinfo(gps):
                         Len = len(lat_str.split(".")[0])
                         d = int(lat_str[0:Len - 2])
                         m = float(lat_str[Len - 2:])
-                        print(" latitude: {} degree {} minute".format(d, m))
-                    print(" {}: {} (format: dddmm.mmmmm)".format(key, msg_list[GPGGA_dict[key]]))
+                        latitude = "{} degree {} minute".format(d, m)
+                    print(" {}: {}".format(key, msg_list[GPGGA_dict[key]]))  # (format: ddmm.mmmmm)
                 # Parse the longitude information.
                 elif key == "longitude":
                     lon_str = msg_list[GPGGA_dict[key]]
@@ -85,16 +81,21 @@ def IsValidGpsinfo(gps):
                         Len = len(lon_str.split(".")[0])
                         d = int(lon_str[0:Len - 2])
                         m = float(lon_str[Len - 2:])
-                        print(" longitude: {} degree {} minute".format(d, m))
-                    print(" {}: {} (format: dddmm.mmmmm)".format(key, msg_list[GPGGA_dict[key]]))
-                else:
-                    print(" {}: {}".format(key, msg_list[GPGGA_dict[key]]))
+                        longitude = "{} degree {} minute".format(d, m)
+                    print(" {}: {}".format(key, msg_list[GPGGA_dict[key]]))  # (format: ddmm.mmmmm)
+            
+            # Once we have the data, we can break the loop
+            if utc_time and latitude and longitude:
+                break
+
+    return utc_time, latitude, longitude
 
 def main():
     with open(gps_data_file, 'r') as gps:
-        while True:
-            IsValidGpsinfo(gps)
-            time.sleep(1)
+        utc_time, latitude, longitude = IsValidGpsinfo(gps)
+        print("UTC Time:", utc_time)
+        print("Latitude:", latitude)
+        print("Longitude:", longitude)
 
-if __name__ == "_main_":
+if __name__ == "__main__":
     sys.exit(main())
