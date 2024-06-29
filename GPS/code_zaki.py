@@ -165,9 +165,9 @@ def set_serial_config(fd, speed):
     oflag = 0
     oflag &= ~(termios.OPOST)
 
-    newtio = [cflag, iflag, oflag, lflag, [0] * termios.NCCS]
-    newtio[4][termios.VTIME] = 5
-    newtio[4][termios.VMIN] = 0
+    newtio = [cflag, iflag, oflag, lflag, 0, [0] * termios.NCCS]
+    newtio[4] = 5
+    newtio[5] = 0
 
     termios.tcsetattr(fd, termios.TCSANOW, newtio)
 
