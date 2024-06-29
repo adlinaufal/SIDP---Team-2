@@ -1,5 +1,8 @@
+# gps_utils.py
+
 import os
 import fcntl
+import termios  # Import termios for baud rate setting
 
 # NMEA sentence indices for GPGSA and GPGGA
 GPGSA_msg_id = 0
@@ -20,7 +23,6 @@ def open_serial_port(port):
         print(f"Error opening serial port {port}: {e}")
         return None
 
-
 def read_gps_data(fd):
     try:
         data = os.read(fd, 256).decode('utf-8').strip()
@@ -33,7 +35,7 @@ def GetGPSData():
     latitude = None
     longitude = None
 
-    serial_port = "/dev/ttyS6"
+    serial_port = "/dev/ttyS0"
     serial_fd = open_serial_port(serial_port)
     
     if serial_fd:
@@ -66,4 +68,3 @@ def GetGPSData():
     else:
         print(f"Failed to open serial port {serial_port}")
         return None, None
-
