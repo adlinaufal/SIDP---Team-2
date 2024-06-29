@@ -54,9 +54,9 @@ def GetGPSData(gps):
                         h = int(utc_str[0:2])
                         m = int(utc_str[2:4])
                         s = float(utc_str[4:])
-                        utc_time = "{}:{}:{}".format(h, m, s
+                        utc_time = "{}:{}:{}".format(h, m, s)
                 elif key == "latitude":
-                    latitude = msg_list[GPGGA_dict[key]
+                    latitude = msg_list[GPGGA_dict[key]]
                 elif key == "longitude":
                         longitude = msg_list[GPGGA_dict[key]]
     
