@@ -40,36 +40,29 @@ def GetGPSData(gps):
         
         if msg_list[GPGSA_dict['msg_id']] == "$GPGSA":
             if msg_list[GPGSA_dict['mode2']] == "1":
-                print("!!!!!!Positioning is invalid!!!!!!")
+                print("!!!!!!!Failed to obtain GPS coordinates.!!!!!!!\n")
+                utc_time = "N/A" 
+                latitude = "N/A" 
+                longitude = "N/A"
+
             else:
-                print("**The positioning type is {}D **".format(msg_list[GPGSA_dict['mode2']]))
+                print("***GPS coordinates successfully retrieved.\n***")
         
-        if msg_list[GPGGA_dict['msg_id']] == "$GPGGA":
-            print("**The GGA info is as follows: **")
-            for key, value in GPGGA_dict.items():
-                if key == "utc":
-                    utc_str = msg_list[GPGGA_dict[key]]
-                    if utc_str:
-                        h = int(utc_str[0:2])
-                        m = int(utc_str[2:4])
-                        s = float(utc_str[4:])
-                        utc_time = "{}:{}:{}".format(h, m, s)
+                if msg_list[GPGGA_dict['msg_id']] == "$GPGGA":
+                    for key, value in GPGGA_dict.items():
+                        if key == "utc":
+                            utc_str = msg_list[GPGGA_dict[key]]
+                            if utc_str:
+                                h = int(utc_str[0:2])
+                                m = int(utc_str[2:4])
+                                s = float(utc_str[4:])
+                                utc_time = "{}:{}:{}".format(h, m, s)
 
-                elif key == "latitude":
-                    lat_str = msg_list[GPGGA_dict[key]]
-                    if lat_str:
-                        Len = len(lat_str.split(".")[0])
-                        d = int(lat_str[0:Len - 2])
-                        m = float(lat_str[Len - 2:])
-                        latitude = "{}".format(msg_list[GPGGA_dict[key]])
+                        elif key == "latitude":
+                            latitude = msg_list[GPGGA_dict[key]]
 
-                elif key == "longitude":
-                    lon_str = msg_list[GPGGA_dict[key]]
-                    if lon_str:
-                        Len = len(lon_str.split(".")[0])
-                        d = int(lon_str[0:Len - 2])
-                        m = float(lon_str[Len - 2:])
-                        longitude = "{}".format(msg_list[GPGGA_dict[key]])
+                        elif key == "longitude":
+                                longitude = msg_list[GPGGA_dict[key]]
             
             if utc_time and latitude and longitude:
                 break
