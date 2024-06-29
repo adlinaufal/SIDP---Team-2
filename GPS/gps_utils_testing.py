@@ -1,4 +1,7 @@
+# gps_utils.py
+
 import os
+import fcntl
 
 GPGSA_dict = {
     "msg_id": 0,
@@ -29,21 +32,40 @@ GPGGA_dict = {
     "total_Satellite": 7,
 }
 
+def open_serial_port(port):
+    fd = os.open(port, os.O_RDWR | os.O_NOCTTY)
+    # Example: set non-blocking mode
+    flags = fcntl.fcntl(fd, fcntl.F_GETFL)
+    fcntl.fcntl(fd, fcntl.F_SETFL, flags | os.O_NONBLOCK)
+    return fd
+
+def read_gps_data(fd):
+    try:
+        data = os.read(fd, 256)  # Read up to 256 bytes (adjust as needed)
+        return data.decode('utf-8').strip()
+    except OSError as e:
+        print(f"Error reading from serial port: {e}")
+        return None
+
 def GetGPSData():
     latitude = None
     longitude = None
 
-    try:
-        with open('/dev/ttyS6', 'r') as gps:
-            for line in gps:
+    serial_port = "/dev/ttyS6"
+    serial_fd = open_serial_port(serial_port)
+    if serial_fd:
+        gps_data = read_gps_data(serial_fd)
+        if gps_data:
+            lines = gps_data.splitlines()
+            for line in lines:
                 msg_str = line.strip()
                 msg_list = msg_str.split(",")
 
                 if msg_list[GPGSA_dict['msg_id']] == "$GPGSA":
                     if msg_list[GPGSA_dict['mode2']] == "1":
                         print("!!!!!!!Failed to obtain GPS coordinates.!!!!!!!\n")
+                        os.close(serial_fd)
                         return None, None
-
                     else:
                         print("***GPS coordinates successfully retrieved.***\n")
 
@@ -54,11 +76,13 @@ def GetGPSData():
                         elif key == "longitude":
                             longitude = msg_list[GPGGA_dict[key]]
 
-                if latitude and longitude:
-                    return latitude, longitude
-
-    except IOError as e:
-        print(f"Error reading GPS data: {e}")
+            os.close(serial_fd)
+            if latitude and longitude:
+                return latitude, longitude
+        else:
+            print("Failed to read GPS data.")
+            os.close(serial_fd)
+            return None, None
+    else:
+        print(f"Failed to open serial port {serial_port}")
         return None, None
-
-    return None, None
