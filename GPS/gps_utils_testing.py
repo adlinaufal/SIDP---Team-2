@@ -15,7 +15,9 @@ def open_serial_port(port):
     try:
         fd = os.open(port, os.O_RDWR | os.O_NOCTTY)
         # Set baud rate (replace 9600 with your module's baud rate if different)
-        fcntl.ioctl(fd, termios.TCIOBANDRATE, termios.B9600)
+        serial_settings = termios.tcgetattr(fd)
+        serial_settings[4] = termios.B9600  # Set baud rate to 9600 (adjust as needed)
+        termios.tcsetattr(fd, termios.TCSANOW, serial_settings)
         flags = fcntl.fcntl(fd, fcntl.F_GETFL)
         fcntl.fcntl(fd, fcntl.F_SETFL, flags | os.O_NONBLOCK)
         return fd
@@ -35,7 +37,7 @@ def GetGPSData():
     latitude = None
     longitude = None
 
-    serial_port = "/dev/ttyS0"
+    serial_port = "/dev/ttyS6"
     serial_fd = open_serial_port(serial_port)
     
     if serial_fd:
