@@ -11,12 +11,15 @@ GPGGA_longitude = 4
 def open_serial_port(port):
     try:
         fd = os.open(port, os.O_RDWR | os.O_NOCTTY)
+        # Set baud rate (replace 9600 with your module's baud rate if different)
+        fcntl.ioctl(fd, termios.TCIOBANDRATE, termios.B9600)
         flags = fcntl.fcntl(fd, fcntl.F_GETFL)
         fcntl.fcntl(fd, fcntl.F_SETFL, flags | os.O_NONBLOCK)
         return fd
     except OSError as e:
         print(f"Error opening serial port {port}: {e}")
         return None
+
 
 def read_gps_data(fd):
     try:
@@ -41,18 +44,11 @@ def GetGPSData():
                 for line in lines:
                     msg_list = line.split(",")
                     
-                    if msg_list[GPGSA_msg_id] == "$GPGSA":
-                        if msg_list[GPGSA_mode2] == "1":
-                            print("Failed to obtain GPS coordinates.")
-                            os.close(serial_fd)
-                            return None, None
-                        else:
-                            print("GPS coordinates successfully retrieved.")
-                    
-                    if msg_list[GPGGA_msg_id] == "$GPGGA":
+                    if msg_list[0] == "$GPGGA" and len(msg_list) >= 10:
                         latitude = msg_list[GPGGA_latitude]
                         longitude = msg_list[GPGGA_longitude]
-                
+                        break  # Exit loop after finding GPGGA
+
                 os.close(serial_fd)
                 if latitude is not None and longitude is not None:
                     return latitude, longitude
@@ -70,3 +66,4 @@ def GetGPSData():
     else:
         print(f"Failed to open serial port {serial_port}")
         return None, None
+
