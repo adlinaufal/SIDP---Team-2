@@ -1,6 +1,6 @@
 # main_gps.py
 
-from gps_utils import GetGPSData
+from gps_utils_testing import GetGPSData
 
 if __name__ == "__main__":
     latitude, longitude = GetGPSData()
