@@ -2,6 +2,7 @@ import sys
 import serial
 import time
 
+
 GPGSA_dict = {
 "msg_id": 	0,
 "mode1": 	1,
@@ -31,29 +32,63 @@ GPGGA_dict = {
 "total_Satellite":      7,
 }
 
-def GetGPSData(gps):
+uart_port = "/dev/ttyS0"
+
+def IsValidGpsinfo(gps):
     data = gps.readline()
     #Convert the data to string. 
     msg_str = str(data, encoding="utf-8")
+    #Split string with ",".
+    #GPGSA,A,1,,,,,,,,,,,,,99.99,99.99,99.99*30
     msg_list = msg_str.split(",")
     
     #Parse the GPGSA message.
-    if msg_list[GPGSA_dict['msg_id']] == "$GPGSA":
-        if msg_list[GPGSA_dict['mode2']] == "1":
-            print("!!!!!!!Failed to obtain GPS coordinates.!!!!!!!\n")
-            return None, None
-        else:
-            print("***GPS coordinates successfully retrieved.***\n")
-
+    if (msg_list[GPGSA_dict['msg_id']] == "$GPGSA"):
+            print()
+            #Check if the positioning is valid.
+            if msg_list[GPGSA_dict['mode2']] == "1":
+                print("!!!!!!Positioning is invalid!!!!!!")
+            else:
+                print("*****GPS coordinates successfully retrieved*****".format(msg_list[GPGSA_dict['mode2']]))
+                
     #Parse the GPGGA message. 
-        if msg_list[GPGGA_dict['msg_id']] == "$GPGGA":
-            for key, value in GPGGA_dict.items():
-                if key == "latitude":
-                    latitude = msg_list[GPGGA_dict[key]]
-                elif key == "longitude":
-                        longitude = msg_list[GPGGA_dict[key]]
+    if msg_list[GPGGA_dict['msg_id']] == "$GPGGA":
+        print()
+        for key, value in GPGGA_dict.items():
+            #Parse the utc information.
+            #if key == "utc":
+            #    utc_str =  msg_list[GPGGA_dict[key]]
+            #    if not utc_str == '':
+            #        h = int(utc_str[0:2])
+            #        m = int(utc_str[2:4])
+            #        s = float(utc_str[4:])
+            #        print(" utc time: {}:{}:{}".format(h,m,s))
+            #        print(" {} time: {} (format: hhmmss.sss)".format(key, msg_list[GPGGA_dict[key]]))
+            #Parse the latitude information.
+            if key == "latitude":
+                latitude = msg_list[GPGGA_dict[key]]
+                if not latitude == '':
+                    Len = len(latitude.split(".")[0])
+                    d = int(latitude[0:Len-2])
+                    m = float(latitude[Len-2:])
+                    #print(" latitude: {} degree {} minute".format(d, m))
+                    print(" {}: {}".format(key, latitude))
+            #Parse the longitude information.
+            elif key == "longitude":
+                longitude = msg_list[GPGGA_dict[key]]
+                if not longitude == '':
+                    Len = len(longitude.split(".")[0])
+                    d = int(longitude[0:Len-2])
+                    m = float(longitude[Len-2:])
+                    #print(" longitude: {} degree {} minute".format(d, m))
+                    print(" {}: {}".format(key, longitude))
+            else:
+                print(" {}: {}".format(key, msg_list[GPGGA_dict[key]]))
 
-    if latitude and longitude:
-        return latitude, longitude
-            
-    return None, None
+def main():
+    gps = serial.Serial(uart_port, baudrate=9600, timeout=0.5)
+    
+    IsValidGpsinfo(gps)
+             
+if __name__ == "__main__":
+    sys.exit(main())
