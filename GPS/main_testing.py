@@ -1,14 +1,20 @@
 import sys
-from testing import uart_port, is_valid_gpsinfo
-import serial
+import time
+from gps_utils import IsValidGpsinfo
+
+uart_port = "/dev/ttyS0"
 
 def main():
     gps = serial.Serial(uart_port, baudrate=9600, timeout=0.5)
-    latitude, longitude = is_valid_gpsinfo(gps)
-    if latitude and longitude:
-        print(f"Latitude: {latitude}, Longitude: {longitude}")
-    else:
-        print("No valid GPS data available.")
+    while True:
+        latitude, longitude = IsValidGpsinfo(gps)
+        if latitude and longitude:
+            print("\nExtracted Coordinates:")
+            print("Latitude: {} degrees {} minutes {}".format(latitude[0], latitude[1], latitude[2]))
+            print("Longitude: {} degrees {} minutes {}".format(longitude[0], longitude[1], longitude[2]))
+            break  # Stop execution once the values are retrieved and printed
+        time.sleep(1)
+    
     gps.close()
 
 if __name__ == "__main__":
