@@ -1,5 +1,3 @@
-import serial
-
 GPGSA_dict = {
     "msg_id": 0,
     "mode1": 1,
@@ -29,7 +27,15 @@ GPGGA_dict = {
     "total_Satellite": 7,
 }
 
-def IsValidGpsinfo(gps):
+uart_port = "/dev/ttyS0"
+
+def convert_to_decimal(degrees, minutes, direction):
+    decimal = degrees + minutes / 60
+    if direction in ['S', 'W']:
+        decimal = -decimal
+    return decimal
+
+def GetGPSData(gps):
     data = gps.readline()
     msg_str = str(data, encoding="utf-8")
     msg_list = msg_str.split(",")
@@ -41,45 +47,26 @@ def IsValidGpsinfo(gps):
         print()
         if msg_list[GPGSA_dict['mode2']] == "1":
             print("!!!!!!Positioning is invalid!!!!!!")
-        else:
-            print("*****The positioning type is {}D *****".format(msg_list[GPGSA_dict['mode2']]))
-            for id in range(0, 12):
-                key_name = list(GPGSA_dict.keys())[id + 3]
-                value_id = GPGSA_dict[key_name]
-                if msg_list[value_id] != '':
-                    print("                           {} : {}".format(key_name, msg_list[value_id]))
+            return None, None
 
     if msg_list[GPGGA_dict['msg_id']] == "$GPGGA":
         print()
         print("*****The GGA info is as follows: *****")
-        for key, value in GPGGA_dict.items():
-            if key == "utc":
-                utc_str = msg_list[GPGGA_dict[key]]
-                if utc_str != '':
-                    h = int(utc_str[0:2])
-                    m = int(utc_str[2:4])
-                    s = float(utc_str[4:])
-                    print(" utc time: {}:{}:{}".format(h, m, s))
-                    print(" {} time: {} (format: hhmmss.sss)".format(key, msg_list[GPGGA_dict[key]]))
-            elif key == "latitude":
-                lat_str = msg_list[GPGGA_dict[key]]
-                if lat_str != '':
-                    Len = len(lat_str.split(".")[0])
-                    d = int(lat_str[0:Len-2])
-                    m = float(lat_str[Len-2:])
-                    latitude = (d, m, msg_list[GPGGA_dict['NorS']])
-                    print(" latitude: {} degree {} minute".format(d, m))
-                    print(" {}: {} (format: dddmm.mmmmm)".format(key, msg_list[GPGGA_dict[key]]))
-            elif key == "longitude":
-                lon_str = msg_list[GPGGA_dict[key]]
-                if lon_str != '':
-                    Len = len(lon_str.split(".")[0])
-                    d = int(lon_str[0:Len-2])
-                    m = float(lon_str[Len-2:])
-                    longitude = (d, m, msg_list[GPGGA_dict['EorW']])
-                    print(" longitude: {} degree {} minute".format(d, m))
-                    print(" {}: {} (format: dddmm.mmmmm)".format(key, msg_list[GPGGA_dict[key]]))
-            else:
-                print(" {}: {}".format(key, msg_list[GPGGA_dict[key]]))
+        lat_str = msg_list[GPGGA_dict["latitude"]]
+        lon_str = msg_list[GPGGA_dict["longitude"]]
+        if lat_str and lon_str:
+            lat_len = len(lat_str.split(".")[0])
+            lon_len = len(lon_str.split(".")[0])
+            
+            lat_deg = int(lat_str[:lat_len-2])
+            lat_min = float(lat_str[lat_len-2:])
+            lat_dir = msg_list[GPGGA_dict["NorS"]]
+            
+            lon_deg = int(lon_str[:lon_len-2])
+            lon_min = float(lon_str[lon_len-2:])
+            lon_dir = msg_list[GPGGA_dict["EorW"]]
+            
+            latitude = convert_to_decimal(lat_deg, lat_min, lat_dir)
+            longitude = convert_to_decimal(lon_deg, lon_min, lon_dir)
     
     return latitude, longitude
