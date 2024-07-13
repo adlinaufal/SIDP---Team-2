@@ -1,4 +1,3 @@
-# Reference information of the GPGSA format.
 GPGSA_dict = {
     "msg_id": 0,
     "mode1": 1,
@@ -17,7 +16,6 @@ GPGSA_dict = {
     "ch12": 14,
 }
 
-# Reference information of the GPGGA format.
 GPGGA_dict = {
     "msg_id": 0,
     "utc": 1,
@@ -29,30 +27,46 @@ GPGGA_dict = {
     "total_Satellite": 7,
 }
 
+uart_port = "/dev/ttyS0"
+
+def convert_to_decimal(degrees, minutes, direction):
+    decimal = degrees + minutes / 60
+    if direction in ['S', 'W']:
+        decimal = -decimal
+    return decimal
+
 def GetGPSData(gps):
+    data = gps.readline()
+    msg_str = str(data, encoding="utf-8")
+    msg_list = msg_str.split(",")
+    
     latitude = None
     longitude = None
 
-    for data in gps:
-        msg_str = data.strip()
-        msg_list = msg_str.split(",")
-        
-        if msg_list[GPGSA_dict['msg_id']] == "$GPGSA":
-            if msg_list[GPGSA_dict['mode2']] == "1":
-                print("!!!!!!!Failed to obtain GPS coordinates.!!!!!!!\n")
-                return None, None
+    if msg_list[GPGSA_dict['msg_id']] == "$GPGSA":
+        print()
+        if msg_list[GPGSA_dict['mode2']] == "1":
+            print("!!!!!!Positioning is invalid!!!!!!")
+            return None, None
 
-            else:
-                print("***GPS coordinates successfully retrieved.***\n")
-
-        if msg_list[GPGGA_dict['msg_id']] == "$GPGGA":
-            for key, value in GPGGA_dict.items():
-                if key == "latitude":
-                    latitude = msg_list[GPGGA_dict[key]]
-                elif key == "longitude":
-                        longitude = msg_list[GPGGA_dict[key]]
-    
-    if latitude and longitude:
-        return latitude, longitude
+    if msg_list[GPGGA_dict['msg_id']] == "$GPGGA":
+        print()
+        print("*****The GGA info is as follows: *****")
+        lat_str = msg_list[GPGGA_dict["latitude"]]
+        lon_str = msg_list[GPGGA_dict["longitude"]]
+        if lat_str and lon_str:
+            lat_len = len(lat_str.split(".")[0])
+            lon_len = len(lon_str.split(".")[0])
             
-    return None, None
+            lat_deg = int(lat_str[:lat_len-2])
+            lat_min = float(lat_str[lat_len-2:])
+            lat_dir = msg_list[GPGGA_dict["NorS"]]
+            
+            lon_deg = int(lon_str[:lon_len-2])
+            lon_min = float(lon_str[lon_len-2:])
+            lon_dir = msg_list[GPGGA_dict["EorW"]]
+            
+            latitude = convert_to_decimal(lat_deg, lat_min, lat_dir)
+            longitude = convert_to_decimal(lon_deg, lon_min, lon_dir)
+    
+    return latitude, longitude

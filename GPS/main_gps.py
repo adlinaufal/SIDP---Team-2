@@ -1,10 +1,15 @@
 import sys
-from gps_utils import GetGPSData
+import serial
+from gps_utils import GetGPSData, uart_port
 
-gps_data_file = "gps_data.txt"  # Path to the file containing GPS data
+def main():
+    gps = serial.Serial(uart_port, baudrate=9600, timeout=0.5)
+    while True:
+        latitude, longitude = GetGPSData(gps)
+        if latitude is not None and longitude is not None:
+            print("\nExtracted Coordinates:")
+            print("{:.6f}, {:.6f}".format(latitude, longitude))
+            break
 
 if __name__ == "__main__":
-    with open(gps_data_file, 'r') as gps:
-        latitude, longitude = GetGPSData(gps)
-        print("Latitude:", latitude)
-        print("Longitude:", longitude)
+    sys.exit(main())
