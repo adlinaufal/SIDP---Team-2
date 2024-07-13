@@ -7,8 +7,8 @@ import os
 def face_rec():
     frame_count = 0
     video_capture = cv2.VideoCapture('/dev/video4') #For webcam (HD Pro Webcam C920) connected to VisionFive2 board
-    video_capture.set(3, 300)
-    video_capture.set(4, 300)
+    video_capture.set(3, 250)
+    video_capture.set(4, 250)
 
     #Load Encoding file
     absolute_path = os.path.dirname(__file__)

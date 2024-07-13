@@ -1,3 +1,5 @@
+import serial
+
 GPGSA_dict = {
     "msg_id": 0,
     "mode1": 1,
@@ -36,8 +38,12 @@ def convert_to_decimal(degrees, minutes, direction):
     return decimal
 
 def GetGPSData(gps):
-    data = gps.readline()
-    msg_str = str(data, encoding="utf-8")
+    try:
+        data = gps.readline()
+        msg_str = str(data, encoding="utf-8")
+    except(UnicodeDecodeError, serial.serialutil.SerialException):
+        return 4.382462, 100.968246
+    
     msg_list = msg_str.split(",")
     
     latitude = None
