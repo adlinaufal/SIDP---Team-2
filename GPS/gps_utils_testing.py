@@ -42,7 +42,6 @@ def GetGPSData(gps):
         try:
             data = gps.readline()
             msg_str = str(data, encoding="utf-8")
-            print("Raw data:", msg_str)  # Debug print
             break
         except (UnicodeDecodeError, serial.serialutil.SerialException):
             pass
@@ -50,24 +49,19 @@ def GetGPSData(gps):
             pass
 
     msg_list = msg_str.split(",")
-
+    
     latitude = None
     longitude = None
 
-    print("Parsed message list:", msg_list)  # Debug print
-
     if msg_list[GPGSA_dict['msg_id']] == "$GPGSA":
-        print("GPGSA detected")
+        print()
         if msg_list[GPGSA_dict['mode2']] == "1":
-            print("!!!!!!Positioning is invalid!!!!!!")
+            print("!!!!!!GPS Device is not ONLINE!!!!!!")
             return None, None
 
     if msg_list[GPGGA_dict['msg_id']] == "$GPGGA":
-        print("GPGGA detected")
         lat_str = msg_list[GPGGA_dict["latitude"]]
         lon_str = msg_list[GPGGA_dict["longitude"]]
-        print("Latitude string:", lat_str)  # Debug print
-        print("Longitude string:", lon_str)  # Debug print
         if lat_str and lon_str:
             lat_len = len(lat_str.split(".")[0])
             lon_len = len(lon_str.split(".")[0])
