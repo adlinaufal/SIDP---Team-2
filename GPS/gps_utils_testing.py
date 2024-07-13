@@ -1,3 +1,5 @@
+import serial
+
 GPGSA_dict = {
     "msg_id": 0,
     "mode1": 1,
@@ -36,24 +38,32 @@ def convert_to_decimal(degrees, minutes, direction):
     return decimal
 
 def GetGPSData(gps):
-    data = gps.readline()
-    msg_str = str(data, encoding="utf-8")
-    msg_list = msg_str.split(",")
-    
     latitude = None
     longitude = None
 
+    try:
+        data = gps.readline()
+        msg_str = str(data, encoding="utf-8")
+        print("Raw data:", msg_str)  # Debug print
+    except (UnicodeDecodeError, serial.serialutil.SerialException) as e:
+        print("Error reading data:", e)  # Debug print
+        return 4.382462, 100.968246
+    
+    msg_list = msg_str.split(",")
+    print("Parsed message list:", msg_list)  # Debug print
+
     if msg_list[GPGSA_dict['msg_id']] == "$GPGSA":
-        print()
+        print("GPGSA detected")
         if msg_list[GPGSA_dict['mode2']] == "1":
             print("!!!!!!Positioning is invalid!!!!!!")
             return None, None
 
     if msg_list[GPGGA_dict['msg_id']] == "$GPGGA":
-        print()
-        print("*****The GGA info is as follows: *****")
+        print("GPGGA detected")
         lat_str = msg_list[GPGGA_dict["latitude"]]
         lon_str = msg_list[GPGGA_dict["longitude"]]
+        print("Latitude string:", lat_str)  # Debug print
+        print("Longitude string:", lon_str)  # Debug print
         if lat_str and lon_str:
             lat_len = len(lat_str.split(".")[0])
             lon_len = len(lon_str.split(".")[0])
