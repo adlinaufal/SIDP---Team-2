@@ -38,18 +38,22 @@ def convert_to_decimal(degrees, minutes, direction):
     return decimal
 
 def GetGPSData(gps):
+    while True:
+        try:
+            data = gps.readline()
+            msg_str = str(data, encoding="utf-8")
+            print("Raw data:", msg_str)  # Debug print
+            break
+        except (UnicodeDecodeError, serial.serialutil.SerialException):
+            pass
+        except Exception:
+            pass
+
+    msg_list = msg_str.split(",")
+
     latitude = None
     longitude = None
 
-    try:
-        data = gps.readline()
-        msg_str = str(data, encoding="utf-8")
-        print("Raw data:", msg_str)  # Debug print
-    except (UnicodeDecodeError, serial.serialutil.SerialException) as e:
-        print("Error reading data:", e)  # Debug print
-        return 4.382462, 100.968246
-    
-    msg_list = msg_str.split(",")
     print("Parsed message list:", msg_list)  # Debug print
 
     if msg_list[GPGSA_dict['msg_id']] == "$GPGSA":
