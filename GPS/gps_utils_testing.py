@@ -1,4 +1,5 @@
 import serial
+import time
 
 GPGSA_dict = {
     "msg_id": 0,
@@ -38,15 +39,20 @@ def convert_to_decimal(degrees, minutes, direction):
     return decimal
 
 def GetGPSData(gps):
-    while True:
+    count = 0
+    limit = 5
+
+    while count < limit:
         try:
             data = gps.readline()
             msg_str = str(data, encoding="utf-8")
             break
-        except (UnicodeDecodeError, serial.serialutil.SerialException):
-            pass
         except Exception:
-            pass
+            count += 1
+            time.sleep(1)
+
+    if count == limit:
+        return 4.382462, 100.968246
 
     msg_list = msg_str.split(",")
     
