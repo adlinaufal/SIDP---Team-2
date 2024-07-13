@@ -50,8 +50,6 @@ def GetGPSData(gps):
             return None, None
 
     if msg_list[GPGGA_dict['msg_id']] == "$GPGGA":
-        print()
-        print("*****The GGA info is as follows: *****")
         lat_str = msg_list[GPGGA_dict["latitude"]]
         lon_str = msg_list[GPGGA_dict["longitude"]]
         if lat_str and lon_str:
