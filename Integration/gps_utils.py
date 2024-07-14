@@ -1,4 +1,5 @@
 import serial
+import time
 
 GPGSA_dict = {
     "msg_id": 0,
@@ -38,22 +39,30 @@ def convert_to_decimal(degrees, minutes, direction):
     return decimal
 
 def GetGPSData(gps):    
-    latitude = None
-    longitude = None
+    NumberofRetries = 0
+    RetriesLimit = 5
 
-    try:
-        data = gps.readline()
-        msg_str = str(data, encoding="utf-8")
-    except(UnicodeDecodeError, serial.serialutil.SerialException) as e:
+    while NumberofRetries < RetriesLimit:
+        try:
+            data = gps.readline()
+            msg_str = str(data, encoding="utf-8")
+            break
+        except Exception:
+            NumberofRetries += 1
+            time.sleep(1)
+    
+    if NumberofRetries == RetriesLimit:
         return 4.382462, 100.968246
     
     msg_list = msg_str.split(",")
 
+    latitude = None
+    longitude = None
 
     if msg_list[GPGSA_dict['msg_id']] == "$GPGSA":
         print()
         if msg_list[GPGSA_dict['mode2']] == "1":
-            print("!!!!!!Positioning is invalid!!!!!!")
+            print("!!!!!!GPS Device is not ONLINE!!!!!!")
             return None, None
 
     if msg_list[GPGGA_dict['msg_id']] == "$GPGGA":
