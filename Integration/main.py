@@ -1,8 +1,9 @@
 import threading
 import time
 import cv2
-from EncodingGenerator import img_encoder
+# from EncodingGenerator import img_encoder
 from FaceRecognition import face_rec
+from main_trans import fetch_encode
 import sys
 
 stop_thread = False
@@ -10,16 +11,23 @@ stop_thread = False
 def face_reg_runtime():
     while stop_thread != True:
         if face_rec():
+            T2.join()
             break
-        
+
+def fetching_encoding():
+    while stop_thread != True:
+        fetch_encode()
 
 # creating  threads
 T1 = threading.Thread(target=face_reg_runtime)
+T2 = threading.Thread(target=fetching_encoding)
 
  
 # starting threads
 T1.start()
+T2.start()
 T1.join()
+
 print("Program Terminated")
 
 

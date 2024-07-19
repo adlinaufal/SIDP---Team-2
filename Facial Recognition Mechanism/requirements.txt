@@ -1,4 +1,4 @@
-conda install cmake
-pip install dlib
-pip install opencv-contrib-python
-pip install face_recognition
+cmake
+dlib
+opencv-contrib-python
+face_recognition
