@@ -9,6 +9,7 @@ from Gtrans_enc import img_encoder  # Assuming transmission_encodegen.py contain
 from PIL import Image, ImageDraw, ImageFont  # PIL library for creating placeholder images
 import traceback
 from PIL import Image
+import threading
 
 # Function to extract file_id from Google Drive URL
 def extract_file_id(url):
@@ -63,8 +64,13 @@ def remove_deleted_images(current_file_names, previous_file_names, folder_path):
         if os.path.exists(file_path):
             os.remove(file_path)
             print(f"Deleted file: {file_path}")
+            thread_event()
+            
+def thread_event():
+    img_encoder()
 
 def fetch_encode():
+    encoding_ready = threading.Event()
     try:
         SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1bqCo5PmQVNV7ix_kQarfSCTYC72P1c-qvrmTcu_Xb4E/edit?usp=sharing'  # Your Google Spreadsheet URL
         SHEET_NAME = 'Form Responses 1'  # Name of the specific sheet within your Google Spreadsheet
@@ -125,11 +131,9 @@ def fetch_encode():
             previous_file_names = current_file_names
 
             if new_images_downloaded:
-                img_encoder()
+                thread_event()
 
     except KeyboardInterrupt:
         print("Process interrupted by user.")
     except Exception as e:
         print("An error occurred:", e)
-
-fetch_encode()
