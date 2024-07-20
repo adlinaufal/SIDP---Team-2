@@ -10,6 +10,9 @@ from PIL import Image, ImageDraw, ImageFont  # PIL library for creating placehol
 import traceback
 from PIL import Image
 import threading
+import sys
+import serial
+from gps_utils import GetGPSData, uart_port, CoordinatestoLocation
 
 # Function to extract file_id from Google Drive URL
 def extract_file_id(url):
@@ -65,9 +68,20 @@ def remove_deleted_images(current_file_names, previous_file_names, folder_path):
             os.remove(file_path)
             print(f"Deleted file: {file_path}")
             img_encoder()
-            
+
+def get_location():
+    gps = serial.Serial(uart_port, baudrate=9600, timeout=0.5)
+    while True:
+        latitude, longitude = GetGPSData(gps)
+        if latitude is not None and longitude is not None:
+            location = CoordinatestoLocation(latitude, longitude)
+            print("\nLocation: ", location)
+            print("Coordinates: {:.6f}, {:.6f}".format(latitude, longitude))
+            return f"{latitude},{longitude}"
+        else:
+            print("GPS data not available. Retrying...")
+
 def fetch_encode():
-    
     try:
         SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1bqCo5PmQVNV7ix_kQarfSCTYC72P1c-qvrmTcu_Xb4E/edit?usp=sharing'  # Your Google Spreadsheet URL
         SHEET_NAME = 'Form Responses 1'  # Name of the specific sheet within your Google Spreadsheet
@@ -95,7 +109,16 @@ def fetch_encode():
             current_file_names = set()
             new_images_downloaded = False
 
-            for item in data:
+            # Get the index of the "Location_coordinate" column, create it if it doesn't exist
+            headers = worksheet.row_values(1)
+            if "Location_coordinate" not in headers:
+                worksheet.add_cols(1)
+                worksheet.update_cell(1, len(headers) + 1, "Location_coordinate")
+                location_col = len(headers) + 1
+            else:
+                location_col = headers.index("Location_coordinate") + 1
+
+            for index, item in enumerate(data, start=2):
                 if 'Name' in item and 'Guest_Profile_Picture' in item and 'Timestamp' in item:
                     name = item['Name']
                     image_url = item['Guest_Profile_Picture']
@@ -112,6 +135,13 @@ def fetch_encode():
                     if not os.path.exists(file_path):
                         download_image_from_drive(image_url, images_directory, sanitized_name, sanitized_timestamp)
                         new_images_downloaded = True
+                        
+                        # Ask for location only when new data is detected
+                        location_coord = get_location()
+
+                        # Update location coordinate
+                        worksheet.update_cell(index, location_col, location_coord)
+                        print(f"Updated location for {name}: {location_coord}")
                     else:
                         print(f"Data exists: '{file_name}'")
 
