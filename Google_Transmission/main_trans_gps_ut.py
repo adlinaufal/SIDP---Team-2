@@ -191,13 +191,6 @@ def fetching_encoding():
                     if not os.path.exists(file_path):
                         download_image_from_drive(image_url, images_directory, sanitized_name, sanitized_timestamp)
                         new_images_downloaded = True
-                        
-                        # Ask for location only when new data is detected
-                        location_coord = get_location()
-
-                        # Update location coordinate
-                        worksheet.update_cell(index, location_col, location_coord)
-                        print(f"Updated location for {name}: {location_coord}")
                     else:
                         print(f"Data exists: '{file_name}'")
 
