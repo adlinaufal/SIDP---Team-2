@@ -6,7 +6,6 @@ import os
 from FaceRecognition import face_rec
 from main_trans import fetch_encode
 import sys
-import os
 import time
 import re
 import requests
@@ -16,13 +15,12 @@ from oauth2client.service_account import ServiceAccountCredentials
 from Gtrans_enc import img_encoder  # Assuming transmission_encodegen.py contains img_encoder function
 from PIL import Image, ImageDraw, ImageFont  # PIL library for creating placeholder images
 import traceback
-from PIL import Image
 import threading
-import cv2
 import pickle as pkl
 import face_recognition
 import numpy as np
-import os
+import serial
+from gps_utils import GetGPSData, uart_port, CoordinatestoLocation
 
 stop_threads = False
 # import time module
@@ -84,6 +82,18 @@ def remove_deleted_images(current_file_names, previous_file_names, folder_path):
             img_encoder()
             Flag = False
 
+def get_location():
+    gps = serial.Serial(uart_port, baudrate=9600, timeout=0.5)
+    while True:
+        latitude, longitude = GetGPSData(gps)
+        if latitude is not None and longitude is not None:
+            location = CoordinatestoLocation(latitude, longitude)
+            print("\nLocation: ", location)
+            print("Coordinates: {:.6f}, {:.6f}".format(latitude, longitude))
+            return f"{latitude},{longitude}"
+        else:
+            print("GPS data not available. Retrying...")
+            
 def face_reg_runtime():
     global stop_threads
     global Flag
@@ -164,7 +174,16 @@ def fetching_encoding():
             current_file_names = set()
             new_images_downloaded = False
 
-            for item in data:
+            # Get the index of the "Location_coordinate" column, create it if it doesn't exist
+            headers = worksheet.row_values(1)
+            if "Location_coordinate" not in headers:
+                worksheet.add_cols(1)
+                worksheet.update_cell(1, len(headers) + 1, "Location_coordinate")
+                location_col = len(headers) + 1
+            else:
+                location_col = headers.index("Location_coordinate") + 1
+
+            for index, item in enumerate(data, start=2):
                 if 'Name' in item and 'Guest_Profile_Picture' in item and 'Timestamp' in item:
                     name = item['Name']
                     image_url = item['Guest_Profile_Picture']
@@ -181,6 +200,13 @@ def fetching_encoding():
                     if not os.path.exists(file_path):
                         download_image_from_drive(image_url, images_directory, sanitized_name, sanitized_timestamp)
                         new_images_downloaded = True
+                        
+                        # Ask for location only when new data is detected
+                        location_coord = get_location()
+
+                        # Update location coordinate
+                        worksheet.update_cell(index, location_col, location_coord)
+                        print(f"Updated location for {name}: {location_coord}")
                     else:
                         print(f"Data exists: '{file_name}'")
 
