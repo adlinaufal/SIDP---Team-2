@@ -2,22 +2,17 @@ import os
 import time
 import re
 import requests
-import cv2
-import numpy as np
-import pickle as pkl
-import face_recognition
 from datetime import datetime
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-from PIL import Image, ImageDraw, ImageFont
+from Gtrans_enc import img_encoder  # Assuming transmission_encodegen.py contains img_encoder function
+from PIL import Image, ImageDraw, ImageFont  # PIL library for creating placeholder images
 import traceback
+from PIL import Image
+import threading
+import sys
 import serial
 from gps_utils import GetGPSData, uart_port, CoordinatestoLocation
-from Gtrans_enc import img_encoder
-
-# Initialize global flags
-stop_threads = False
-Flag = False
 
 # Function to extract file_id from Google Drive URL
 def extract_file_id(url):
@@ -66,16 +61,13 @@ def sanitize_filename(name):
     return re.sub(r'[/\\: ]', '_', name)
 
 def remove_deleted_images(current_file_names, previous_file_names, folder_path):
-    global Flag
     deleted_files = previous_file_names - current_file_names
     for file_name in deleted_files:
         file_path = os.path.join(folder_path, file_name)
         if os.path.exists(file_path):
             os.remove(file_path)
             print(f"Deleted file: {file_path}")
-            Flag = True
             img_encoder()
-            Flag = False
 
 def get_location():
     gps = serial.Serial(uart_port, baudrate=9600, timeout=0.5)
@@ -91,6 +83,7 @@ def get_location():
         else:
             print("GPS data not available. Retrying...")
 
+<<<<<<< HEAD
 def face_reg_runtime(worksheet, location_col):
     global stop_threads
     global Flag
@@ -145,11 +138,13 @@ def face_reg_runtime(worksheet, location_col):
 
         cv2.imshow("Face video_capture", frame)
 
+=======
+>>>>>>> parent of 0db6d68 (Update main_trans.py)
 def fetch_encode():
     global stop_threads
     try:
-        SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1bqCo5PmQVNV7ix_kQarfSCTYC72P1c-qvrmTcu_Xb4E/edit?usp=sharing'
-        SHEET_NAME = 'Form Responses 1'
+        SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1bqCo5PmQVNV7ix_kQarfSCTYC72P1c-qvrmTcu_Xb4E/edit?usp=sharing'  # Your Google Spreadsheet URL
+        SHEET_NAME = 'Form Responses 1'  # Name of the specific sheet within your Google Spreadsheet
 
         current_directory = os.path.dirname(os.path.abspath(__file__))
         JSON_FILENAME = "sidp-facialrecognition-21f79db4b512"
@@ -194,15 +189,23 @@ def fetch_encode():
                     file_name = f"{sanitized_name}_{sanitized_timestamp}.jpg"
                     file_path = os.path.join(images_directory, file_name)
                     current_file_names.add(file_name)
-
+                    # print(current_file_names)
                     print(file_path)
 
                     if not os.path.exists(file_path):
                         download_image_from_drive(image_url, images_directory, sanitized_name, sanitized_timestamp)
                         new_images_downloaded = True
+<<<<<<< HEAD
 
                         # Ask for location only when new data is detected
                         location_coord = get_location()
+=======
+                        
+                        # Ask for location only when new data is detected
+                        location_coord = get_location()
+
+                        # Update location coordinate
+>>>>>>> parent of 0db6d68 (Update main_trans.py)
                         worksheet.update_cell(index, location_col, location_coord)
                         print(f"Updated location for {name}: {location_coord}")
                     else:
