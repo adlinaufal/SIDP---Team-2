@@ -2,10 +2,6 @@ import threading
 import time
 import cv2
 import os
-# from EncodingGenerator import img_encoder
-from FaceRecognition import face_rec
-from main_trans import fetch_encode
-import sys
 import time
 import re
 import requests
@@ -22,8 +18,7 @@ import numpy as np
 import serial
 from gps_utils import GetGPSData, uart_port, CoordinatestoLocation
 
-stop_threads = False
-# import time module
+
 def extract_file_id(url):
     pattern = r'id=([a-zA-Z0-9-_]+)'
     match = re.search(pattern, url)
@@ -121,7 +116,7 @@ def face_reg_runtime():
             break
         
         frame_count +=1
-        if Flag == False:
+        if not Flag:
             if frame_count % 20 == 0:
                 
                 imgS = cv2.resize(frame, (0,0), None, 0.25, 0.25)
@@ -233,26 +228,25 @@ def fetching_encoding():
         print("An error occurred:", e)
     print("here 2")
 
-        
+stop_threads = False 
 Flag = False
 # creating  threads
-if __name__=='__main__':
-  event_object = threading.Event()
+if __name__ == '__main__':
+    try:
+        T1 = threading.Thread(target=face_reg_runtime)
+        T2 = threading.Thread(target=fetching_encoding)
 
-lock = threading.RLock()
-T1 = threading.Thread(target=face_reg_runtime)
-T2 = threading.Thread(target=fetching_encoding)
+        T1.start()
+        T2.start()
 
- 
-# starting threads
-T1.start()
-T2.start()
-T1.join()
-T2.join()
+        T1.join()
+        T2.join()
 
+    except Exception as e:
+        print(f"Exception in main: {e}")
+        print(traceback.format_exc())
 
-
-print("Program Terminated")
+    print("Program Terminated")
 
 
 """
