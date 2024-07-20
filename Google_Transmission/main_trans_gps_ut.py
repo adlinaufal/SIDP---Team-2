@@ -81,9 +81,11 @@ def get_location():
             longitude = f"{longitude:.6f}"
             print("Coordinates: {}, {}".format(latitude, longitude))
             return f"{latitude},{longitude}"
+        else:
+            print("GPS data not available. Retrying...")
 
 # Function to update the location coordinates in Google Sheets
-def update_location_in_sheet(name, timestamp, location_coord, client, spreadsheet_url, sheet_name):
+def update_location_in_sheet(name, timestamp_id, location_coord, client, spreadsheet_url, sheet_name):
     try:
         spreadsheet = client.open_by_url(spreadsheet_url)
         worksheet = spreadsheet.worksheet(sheet_name)
@@ -92,13 +94,13 @@ def update_location_in_sheet(name, timestamp, location_coord, client, spreadshee
         for index, item in enumerate(data, start=2):  # start=2 because row 1 is headers
             if 'Name' in item and 'timestamp_id' in item:
                 row_name = item['Name']
-                row_timestamp = item['timestamp_id']
-                if row_name == name and row_timestamp == timestamp:
+                row_timestamp_id = item['timestamp_id']
+                if row_name == name and row_timestamp_id == timestamp_id:
                     worksheet.update_cell(index, worksheet.find('Location_coordinate').col, location_coord)
                     print(f"Updated location for {name} in row {index}: {location_coord}")
                     return True
 
-        print(f"No matching row found for {name} with timestamp_id {timestamp}")
+        print(f"No matching row found for {name} with timestamp_id {timestamp_id}")
         return False
 
     except Exception as e:
@@ -142,15 +144,15 @@ def face_rec(client, spreadsheet_url, sheet_name):
                 matchIndex = np.argmin(faceDis)
                 if matches[matchIndex]:
                     identified_id = individual_ID[matchIndex]
-                    name, timestamp = identified_id.split('_', 1)  # Split only once at the first underscore
+                    name, timestamp_id = identified_id.split('_', 1)  # Split only once at the first underscore
 
                     location_coord = get_location()
                     print("SHOW ME THIS OUTPUT ADLI")
                     print(f"Location for {identified_id}: {location_coord}")
 
                     # Update the Google Sheet with the location coordinates
-                    if not update_location_in_sheet(name, timestamp, location_coord, client, spreadsheet_url, sheet_name):
-                        print(f"Failed to update location for {name} with timestamp {timestamp}")
+                    if not update_location_in_sheet(name, timestamp_id, location_coord, client, spreadsheet_url, sheet_name):
+                        print(f"Failed to update location for {name} with timestamp_id {timestamp_id}")
 
         cv2.imshow("Face video_capture", frame)
 
