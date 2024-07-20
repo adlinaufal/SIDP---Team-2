@@ -24,6 +24,13 @@ def extract_file_id(url):
     else:
         raise ValueError("File ID not found in the URL")
 
+# Function to sanitize filename
+def sanitize_filename(name):
+    # Replace spaces with hyphens in the name
+    name = name.replace(' ', '-')
+    # Remove any other invalid characters
+    return re.sub(r'[/\\:*?"<>|]', '', name)
+
 # Function to download image from Google Drive URL and rename it
 def download_image_from_drive(url, folder_path, name, timestamp):
     try:
@@ -31,7 +38,7 @@ def download_image_from_drive(url, folder_path, name, timestamp):
         download_url = f"https://drive.google.com/uc?id={file_id}"
         response = requests.get(download_url)
 
-        name = name.replace(' ', '_')
+        name = sanitize_filename(name)
         timestamp = timestamp.replace(' ', '').replace('/', '').replace(':', '')
 
         file_name = os.path.join(folder_path, f"{name}_{timestamp}.jpg")
@@ -58,9 +65,6 @@ def create_placeholder_image(filepath):
     draw.text((10, 90), "Placeholder", fill='white', font=font)
     image.save(filepath)
 
-def sanitize_filename(name):
-    return re.sub(r'[/\\: ]', '_', name)
-
 def remove_deleted_images(current_file_names, previous_file_names, folder_path):
     deleted_files = previous_file_names - current_file_names
     for file_name in deleted_files:
@@ -81,8 +85,6 @@ def get_location():
             longitude = f"{longitude:.6f}"
             print("Coordinates: {}, {}".format(latitude, longitude))
             return f"{latitude},{longitude}"
-        else:
-            print("GPS data not available. Retrying...")
 
 # Function to update the location coordinates in Google Sheets
 def update_location_in_sheet(name, timestamp_id, location_coord, client, spreadsheet_url, sheet_name):
@@ -110,17 +112,21 @@ def update_location_in_sheet(name, timestamp_id, location_coord, client, spreads
 # Function to perform face recognition
 def face_rec(client, spreadsheet_url, sheet_name):
     frame_count = 0
-    video_capture = cv2.VideoCapture(0)  # For webcam (HD Pro Webcam C920) connected to VisionFive2 board
+    video_capture = cv2.VideoCapture(0)
     video_capture.set(3, 250)
     video_capture.set(4, 250)
 
-    # Load Encoding file
     absolute_path = os.path.dirname(__file__)
     with open(os.path.join(absolute_path, "EncodedFile.p"), "rb") as file:
         encodeListKnown_withID = pkl.load(file)
     encodeListKnown, individual_ID = encodeListKnown_withID
 
     print(individual_ID)  # to check IDs loaded
+
+    # Get the spreadsheet data
+    spreadsheet = client.open_by_url(spreadsheet_url)
+    worksheet = spreadsheet.worksheet(sheet_name)
+    data = worksheet.get_all_records()
 
     while video_capture.isOpened():
         ret, frame = video_capture.read()
@@ -144,15 +150,31 @@ def face_rec(client, spreadsheet_url, sheet_name):
                 matchIndex = np.argmin(faceDis)
                 if matches[matchIndex]:
                     identified_id = individual_ID[matchIndex]
-                    name, timestamp_id = identified_id.split('_', 1)  # Split only once at the first underscore
+                    print(f"Face recognized - {identified_id}\n")
+                    detected_name = identified_id.split('_')[0].replace('-', ' ')  # Convert hyphens back to spaces
+                    detected_timestamp_id = '_'.join(identified_id.split('_')[1:])
 
-                    location_coord = get_location()
-                    print("SHOW ME THIS OUTPUT ADLI")
-                    print(f"Location for {identified_id}: {location_coord}")
+                    # Check the spreadsheet for matching name and timestamp_id
+                    matching_row = None
+                    for row in data:
+                        if row['Name'] == detected_name:
+                            if row['timestamp_id'] == detected_timestamp_id:
+                                matching_row = row
+                                break
+                            elif matching_row is None:
+                                matching_row = row  # Keep this as a potential match if no exact match is found
 
-                    # Update the Google Sheet with the location coordinates
-                    if not update_location_in_sheet(name, timestamp_id, location_coord, client, spreadsheet_url, sheet_name):
-                        print(f"Failed to update location for {name} with timestamp_id {timestamp_id}")
+                    if matching_row:
+                        name = matching_row['Name']
+                        timestamp_id = matching_row['timestamp_id']
+                        
+                        location_coord = get_location()
+                        print(f"Location for {name} (timestamp_id: {timestamp_id}): {location_coord}")
+
+                        if not update_location_in_sheet(name, timestamp_id, location_coord, client, spreadsheet_url, sheet_name):
+                            print(f"Failed to update location for {name} with timestamp_id {timestamp_id}")
+                    else:
+                        print(f"No matching record found for detected face: {detected_name}")
 
         cv2.imshow("Face video_capture", frame)
 
@@ -223,4 +245,5 @@ def fetch_encode():
         print("An error occurred:", e)
         print(traceback.format_exc())
 
-fetch_encode()
+if __name__ == "__main__":
+    fetch_encode()
