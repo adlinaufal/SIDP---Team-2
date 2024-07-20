@@ -18,6 +18,11 @@ from PIL import Image, ImageDraw, ImageFont  # PIL library for creating placehol
 import traceback
 from PIL import Image
 import threading
+import cv2
+import pickle as pkl
+import face_recognition
+import numpy as np
+import os
 
 stop_threads = False
 # import time module
@@ -67,24 +72,71 @@ def sanitize_filename(name):
     return re.sub(r'[/\\: ]', '_', name)
 
 def remove_deleted_images(current_file_names, previous_file_names, folder_path):
+    global Flag
     deleted_files = previous_file_names - current_file_names
     for file_name in deleted_files:
         file_path = os.path.join(folder_path, file_name)
         if os.path.exists(file_path):
             os.remove(file_path)
             print(f"Deleted file: {file_path}")
+            
+            Flag = True
             img_encoder()
+            Flag = False
 
 def face_reg_runtime():
-    while True:
-        global stop_threads
-        if face_rec():
+    global stop_threads
+    global Flag
+    frame_count = 0
+    video_capture = cv2.VideoCapture(0) #For webcam (HD Pro Webcam C920) connected to VisionFive2 board
+                                                    #'/dev/video4'
+    video_capture.set(3, 250)
+    video_capture.set(4, 250)
+
+    #Load Encoding file
+    absolute_path = os.path.dirname(__file__)
+    with open(os.path.join(absolute_path, "EncodedFile.p"), "rb") as file:
+        encodeListKnown_withID = pkl.load(file)
+    encodeListKnown, individual_ID = encodeListKnown_withID
+
+    print(individual_ID)# to check id's loaded
+
+    while video_capture.isOpened():
+
+        ret, frame = video_capture.read()
+        if cv2.waitKey(1) & 0xFF == ord('q'):
             stop_threads = True
+            video_capture.release() 
+            cv2.destroyAllWindows()
             break
+        
+        frame_count +=1
+        if Flag == False:
+            if frame_count % 20 == 0:
+                
+                imgS = cv2.resize(frame, (0,0), None, 0.25, 0.25)
+                imgS = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+                faceCurFrame = face_recognition.face_locations(imgS)
+                encodeCurFrame = face_recognition.face_encodings(imgS, faceCurFrame)
+
+                for encodeFace,faceLoc in zip(encodeCurFrame, faceCurFrame):
+                    matches = face_recognition.compare_faces(encodeListKnown, encodeFace)
+                    faceDis = face_recognition.face_distance(encodeListKnown, encodeFace)
+
+                    matchIndex = np.argmin(faceDis)
+                    if matches[matchIndex]:
+                        print(individual_ID[matchIndex])
+        else:
+            continue
+
+        cv2.imshow("Face video_capture",frame)
 
 def fetching_encoding():
     print("here 1")
+    img_encoder()
     global stop_threads
+    global Flag
     try:
         SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1bqCo5PmQVNV7ix_kQarfSCTYC72P1c-qvrmTcu_Xb4E/edit?usp=sharing'  # Your Google Spreadsheet URL
         SHEET_NAME = 'Form Responses 1'  # Name of the specific sheet within your Google Spreadsheet
@@ -145,7 +197,9 @@ def fetching_encoding():
             previous_file_names = current_file_names
 
             if new_images_downloaded:
+                Flag = True
                 img_encoder()
+                Flag = False
 
     except KeyboardInterrupt:
         print("Process interrupted by user.")
@@ -154,11 +208,12 @@ def fetching_encoding():
     print("here 2")
 
         
-
+Flag = False
 # creating  threads
 if __name__=='__main__':
   event_object = threading.Event()
 
+lock = threading.RLock()
 T1 = threading.Thread(target=face_reg_runtime)
 T2 = threading.Thread(target=fetching_encoding)
 
@@ -186,6 +241,16 @@ Progress 1:
 Progress 2:
     Combined main_trans file with main.py file due to thread handling difficulties.
     Successfully terminated the program by pressing Q on keyboard.
+
+Progress 3:
+    Successfully make the threads run together. The first problem encountered is
+    when a new registration happened and the EncodedFile.p need to be encoded again,
+    the threads will stop running due to file access conflict. The first approach is
+    to use thread management system. However, the structure of the program itself,
+    does not fit with the thread management. The successful approach is to disable
+    file reading in the face_recognition function. This allow the EncodedFile.p to
+    be able to encode again without interrupting the running threads.
+    Next task-> include GPS reading when individual face is detected.
 """
 
 
