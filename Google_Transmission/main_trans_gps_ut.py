@@ -77,13 +77,39 @@ def get_location():
         if latitude is not None and longitude is not None:
             location = CoordinatestoLocation(latitude, longitude)
             print("\nLocation: ", location)
-            print("Coordinates: {:.6f}, {:.6f}".format(latitude, longitude))
+            # Format latitude and longitude to 6 decimal places
+            latitude = f"{latitude:.6f}"
+            longitude = f"{longitude:.6f}"
+            print("Coordinates: {}, {}".format(latitude, longitude))
             return f"{latitude},{longitude}"
         else:
             print("GPS data not available. Retrying...")
 
+# Function to update the location coordinates in Google Sheets
+def update_location_in_sheet(name, timestamp, location_coord, client, spreadsheet_url, sheet_name):
+    try:
+        spreadsheet = client.open_by_url(spreadsheet_url)
+        worksheet = spreadsheet.worksheet(sheet_name)
+        data = worksheet.get_all_records()
+
+        for index, item in enumerate(data, start=2):  # start=2 because row 1 is headers
+            if 'Name' in item and 'Timestamp' in item:
+                row_name = item['Name']
+                row_timestamp = item['Timestamp']
+                if row_name == name and row_timestamp == timestamp:
+                    worksheet.update_cell(index, worksheet.find('Location_coordinate').col, location_coord)
+                    print(f"Updated location for {name} in row {index}: {location_coord}")
+                    return True
+
+        print(f"No matching row found for {name} with timestamp {timestamp}")
+        return False
+
+    except Exception as e:
+        print("An error occurred while updating the location:", e)
+        return False
+
 # Function to perform face recognition
-def face_rec():
+def face_rec(client, spreadsheet_url, sheet_name):
     frame_count = 0
     video_capture = cv2.VideoCapture(0)  # For webcam (HD Pro Webcam C920) connected to VisionFive2 board
     video_capture.set(3, 250)
@@ -118,10 +144,16 @@ def face_rec():
 
                 matchIndex = np.argmin(faceDis)
                 if matches[matchIndex]:
-                    print(individual_ID[matchIndex])
+                    identified_id = individual_ID[matchIndex]
+                    name, timestamp = identified_id.split('_', 1)  # Split only once at the first underscore
+
                     location_coord = get_location()
                     print("SHOW ME THIS OUTPUT ADLI")
-                    print(f"Location for {individual_ID[matchIndex]}: {location_coord}")
+                    print(f"Location for {identified_id}: {location_coord}")
+
+                    # Update the Google Sheet with the location coordinates
+                    if not update_location_in_sheet(name, timestamp, location_coord, client, spreadsheet_url, sheet_name):
+                        print(f"Failed to update location for {name} with timestamp {timestamp}")
 
         cv2.imshow("Face video_capture", frame)
 
@@ -181,7 +213,7 @@ def fetch_encode():
 
             if new_images_downloaded:
                 img_encoder()
-                face_rec()  # Call face recognition function
+                face_rec(client, SPREADSHEET_URL, SHEET_NAME)
 
     except KeyboardInterrupt:
         print("Process interrupted by user.")
