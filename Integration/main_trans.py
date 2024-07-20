@@ -1,3 +1,4 @@
+#CODE WITHOUT GPS
 import os
 import time
 import re
