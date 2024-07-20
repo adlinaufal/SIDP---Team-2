@@ -6,6 +6,7 @@ import cv2
 import numpy as np
 import pickle as pkl
 import face_recognition
+from datetime import datetime
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from PIL import Image, ImageDraw, ImageFont
@@ -81,6 +82,8 @@ def get_location():
     while True:
         latitude, longitude = GetGPSData(gps)
         if latitude is not None and longitude is not None:
+            latitude = round(latitude, 6)
+            longitude = round(longitude, 6)
             location = CoordinatestoLocation(latitude, longitude)
             print("\nLocation: ", location)
             print("Coordinates: {:.6f}, {:.6f}".format(latitude, longitude))
@@ -88,7 +91,7 @@ def get_location():
         else:
             print("GPS data not available. Retrying...")
 
-def face_reg_runtime(spreadsheet, location_col):
+def face_reg_runtime(worksheet, location_col):
     global stop_threads
     global Flag
     frame_count = 0
@@ -134,17 +137,16 @@ def face_reg_runtime(spreadsheet, location_col):
                         location_coord = get_location()
                         print(f"Location for {name}: {location_coord}")
 
-                        # Find the index of the detected name in the spreadsheet
-                        cell = spreadsheet.find(name)
-                        if cell:
-                            row = cell.row
-                            # Update the location coordinate in the spreadsheet
-                            spreadsheet.update_cell(row, location_col, location_coord)
-                            print(f"Updated location for {name} in the spreadsheet: {location_coord}")
+                        # Update the spreadsheet with the location
+                        cells = worksheet.findall(name)
+                        for cell in cells:
+                            worksheet.update_cell(cell.row, location_col, location_coord)
+                            print(f"Updated location for {name} in row {cell.row}: {location_coord}")
 
         cv2.imshow("Face video_capture", frame)
 
 def fetch_encode():
+    global stop_threads
     try:
         SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1bqCo5PmQVNV7ix_kQarfSCTYC72P1c-qvrmTcu_Xb4E/edit?usp=sharing'
         SHEET_NAME = 'Form Responses 1'
@@ -163,24 +165,23 @@ def fetch_encode():
 
         previous_file_names = set()
 
-        # Open the spreadsheet and get the sheet
-        spreadsheet = client.open_by_url(SPREADSHEET_URL).worksheet(SHEET_NAME)
-
-        # Get the index of the "Location_coordinate" column, create it if it doesn't exist
-        headers = spreadsheet.row_values(1)
-        if "Location_coordinate" not in headers:
-            spreadsheet.add_cols(1)
-            spreadsheet.update_cell(1, len(headers) + 1, "Location_coordinate")
-            location_col = len(headers) + 1
-        else:
-            location_col = headers.index("Location_coordinate") + 1
-
-        while True:
+        while not stop_threads:
             time.sleep(10)
-            data = spreadsheet.get_all_records()
+            spreadsheet = client.open_by_url(SPREADSHEET_URL)
+            worksheet = spreadsheet.worksheet(SHEET_NAME)
+            data = worksheet.get_all_records()
 
             current_file_names = set()
             new_images_downloaded = False
+
+            # Get the index of the "Location_coordinate" column, create it if it doesn't exist
+            headers = worksheet.row_values(1)
+            if "Location_coordinate" not in headers:
+                worksheet.add_cols(1)
+                worksheet.update_cell(1, len(headers) + 1, "Location_coordinate")
+                location_col = len(headers) + 1
+            else:
+                location_col = headers.index("Location_coordinate") + 1
 
             for index, item in enumerate(data, start=2):
                 if 'Name' in item and 'Guest_Profile_Picture' in item and 'Timestamp' in item:
@@ -202,14 +203,14 @@ def fetch_encode():
 
                         # Ask for location only when new data is detected
                         location_coord = get_location()
-                        spreadsheet.update_cell(index, location_col, location_coord)
+                        worksheet.update_cell(index, location_col, location_coord)
                         print(f"Updated location for {name}: {location_coord}")
                     else:
                         print(f"Data exists: '{file_name}'")
 
                     image = Image.open(file_path)
                     image = image.convert('RGB')
-                    new_image = image.resize((960,720))
+                    new_image = image.resize((960, 720))
                     new_image.save(file_path)
 
                 else:
@@ -222,19 +223,27 @@ def fetch_encode():
             if new_images_downloaded:
                 img_encoder()
 
+        return worksheet, location_col
+
     except KeyboardInterrupt:
+        stop_threads = True
         print("Process interrupted by user.")
     except Exception as e:
         print("An error occurred:", e)
 
-# Main function to start threads
 if __name__ == '__main__':
     event_object = threading.Event()
 
-    lock = threading.RLock()
-    # Start the data fetching thread
+    worksheet, location_col = fetch_encode()
+
+    # Creating threads
+    T1 = threading.Thread(target=face_reg_runtime, args=(worksheet, location_col))
     T2 = threading.Thread(target=fetch_encode)
+
+    # Starting threads
+    T1.start()
     T2.start()
 
-    # Fetch the spreadsheet and location column index
-    SPREADSHEET_URL = 'https://docs.google.com/sp
+    # Waiting for threads to complete
+    T1.join()
+    T2.join()
