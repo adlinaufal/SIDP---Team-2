@@ -77,13 +77,10 @@ def get_location():
         if latitude is not None and longitude is not None:
             location = CoordinatestoLocation(latitude, longitude)
             print("\nLocation: ", location)
-            # Format latitude and longitude to 6 decimal places
             latitude = f"{latitude:.6f}"
             longitude = f"{longitude:.6f}"
             print("Coordinates: {}, {}".format(latitude, longitude))
             return f"{latitude},{longitude}"
-        else:
-            print("GPS data not available. Retrying...")
 
 # Function to update the location coordinates in Google Sheets
 def update_location_in_sheet(name, timestamp, location_coord, client, spreadsheet_url, sheet_name):
@@ -93,15 +90,15 @@ def update_location_in_sheet(name, timestamp, location_coord, client, spreadshee
         data = worksheet.get_all_records()
 
         for index, item in enumerate(data, start=2):  # start=2 because row 1 is headers
-            if 'Name' in item and 'Timestamp' in item:
+            if 'Name' in item and 'timestamp_id' in item:
                 row_name = item['Name']
-                row_timestamp = item['Timestamp']
+                row_timestamp = item['timestamp_id']
                 if row_name == name and row_timestamp == timestamp:
                     worksheet.update_cell(index, worksheet.find('Location_coordinate').col, location_coord)
                     print(f"Updated location for {name} in row {index}: {location_coord}")
                     return True
 
-        print(f"No matching row found for {name} with timestamp {timestamp}")
+        print(f"No matching row found for {name} with timestamp_id {timestamp}")
         return False
 
     except Exception as e:
@@ -197,6 +194,9 @@ def fetch_encode():
                     file_name = f"{sanitized_name}_{sanitized_timestamp}.jpg"
                     file_path = os.path.join(images_directory, file_name)
                     current_file_names.add(file_name)
+
+                    # Update the Google Sheet with the sanitized timestamp in 'timestamp_id' column
+                    worksheet.update_cell(index, worksheet.find('timestamp_id').col, sanitized_timestamp)
 
                     if not os.path.exists(file_path):
                         download_image_from_drive(image_url, images_directory, sanitized_name, sanitized_timestamp)
