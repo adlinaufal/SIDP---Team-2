@@ -6,7 +6,8 @@ import os
 
 def face_rec():
     frame_count = 0
-    video_capture = cv2.VideoCapture('/dev/video4') #For webcam (HD Pro Webcam C920) connected to VisionFive2 board
+    video_capture = cv2.VideoCapture(0) #For webcam (HD Pro Webcam C920) connected to VisionFive2 board
+                                                    #'/dev/video4'
     video_capture.set(3, 250)
     video_capture.set(4, 250)
 
@@ -44,3 +45,6 @@ def face_rec():
                     print(individual_ID[matchIndex])
 
         cv2.imshow("Face video_capture",frame)
+
+if __name__ == "__main__":
+    face_rec()
