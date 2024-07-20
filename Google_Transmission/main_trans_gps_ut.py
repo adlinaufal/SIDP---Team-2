@@ -1,6 +1,3 @@
-import threading
-import time
-import cv2
 import os
 import time
 import re
@@ -8,17 +5,17 @@ import requests
 from datetime import datetime
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-from Gtrans_enc import img_encoder  # Assuming transmission_encodegen.py contains img_encoder function
-from PIL import Image, ImageDraw, ImageFont  # PIL library for creating placeholder images
+from Gtrans_enc import img_encoder
+from PIL import Image, ImageDraw, ImageFont
 import traceback
-import threading
+import serial
+from gps_utils_ut import GetGPSData, uart_port, CoordinatestoLocation
+import cv2
 import pickle as pkl
 import face_recognition
 import numpy as np
-import serial
-from gps_utils_ut import GetGPSData, uart_port, CoordinatestoLocation
 
-
+# Function to extract file_id from Google Drive URL
 def extract_file_id(url):
     pattern = r'id=([a-zA-Z0-9-_]+)'
     match = re.search(pattern, url)
@@ -65,95 +62,78 @@ def sanitize_filename(name):
     return re.sub(r'[/\\: ]', '_', name)
 
 def remove_deleted_images(current_file_names, previous_file_names, folder_path):
-    global Flag
     deleted_files = previous_file_names - current_file_names
     for file_name in deleted_files:
         file_path = os.path.join(folder_path, file_name)
         if os.path.exists(file_path):
             os.remove(file_path)
             print(f"Deleted file: {file_path}")
-            
-            Flag = True
-            img_encoder()
-            Flag = False
 
+# Function to get location from user input
 def get_location():
     gps = serial.Serial(uart_port, baudrate=9600, timeout=0.5)
     while True:
         latitude, longitude = GetGPSData(gps)
         if latitude is not None and longitude is not None:
-            latitude = round(latitude, 6)
-            longitude = round(longitude, 6)
             location = CoordinatestoLocation(latitude, longitude)
             print("\nLocation: ", location)
             print("Coordinates: {:.6f}, {:.6f}".format(latitude, longitude))
             return f"{latitude},{longitude}"
         else:
             print("GPS data not available. Retrying...")
-            
-def face_reg_runtime():
-    global stop_threads
-    global Flag
+
+# Function to perform face recognition
+def face_rec():
     frame_count = 0
-    video_capture = cv2.VideoCapture(0) #For webcam (HD Pro Webcam C920) connected to VisionFive2 board
-                                                    #'/dev/video4'
+    video_capture = cv2.VideoCapture(0)  # For webcam (HD Pro Webcam C920) connected to VisionFive2 board
     video_capture.set(3, 250)
     video_capture.set(4, 250)
 
-    #Load Encoding file
+    # Load Encoding file
     absolute_path = os.path.dirname(__file__)
     with open(os.path.join(absolute_path, "EncodedFile.p"), "rb") as file:
         encodeListKnown_withID = pkl.load(file)
     encodeListKnown, individual_ID = encodeListKnown_withID
 
-    print(individual_ID)# to check id's loaded
+    print(individual_ID)  # to check IDs loaded
 
     while video_capture.isOpened():
-
         ret, frame = video_capture.read()
         if cv2.waitKey(1) & 0xFF == ord('q'):
-            stop_threads = True
-            video_capture.release() 
+            video_capture.release()
             cv2.destroyAllWindows()
-            break
-        
-        frame_count +=1
-        if not Flag:
-            if frame_count % 20 == 0:
-                
-                imgS = cv2.resize(frame, (0,0), None, 0.25, 0.25)
-                imgS = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            return True
 
-                faceCurFrame = face_recognition.face_locations(imgS)
-                encodeCurFrame = face_recognition.face_encodings(imgS, faceCurFrame)
+        frame_count += 1
+        if frame_count % 20 == 0:
+            imgS = cv2.resize(frame, (0, 0), None, 0.25, 0.25)
+            imgS = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-                for encodeFace,faceLoc in zip(encodeCurFrame, faceCurFrame):
-                    matches = face_recognition.compare_faces(encodeListKnown, encodeFace)
-                    faceDis = face_recognition.face_distance(encodeListKnown, encodeFace)
+            faceCurFrame = face_recognition.face_locations(imgS)
+            encodeCurFrame = face_recognition.face_encodings(imgS, faceCurFrame)
 
-                    matchIndex = np.argmin(faceDis)
-                    if matches[matchIndex]:
-                        print(individual_ID[matchIndex])
-                        location_coord = get_location()
-                        print(f"Location for {individual_ID[matchIndex]}: {location_coord}")
+            for encodeFace, faceLoc in zip(encodeCurFrame, faceCurFrame):
+                matches = face_recognition.compare_faces(encodeListKnown, encodeFace)
+                faceDis = face_recognition.face_distance(encodeListKnown, encodeFace)
 
-        else:
-            continue
+                matchIndex = np.argmin(faceDis)
+                if matches[matchIndex]:
+                    print(individual_ID[matchIndex])
+                    location_coord = get_location()
+                    print("SHOW ME THIS OUTPUT ADLI")
+                    print(f"Location for {individual_ID[matchIndex]}: {location_coord}")
 
-        cv2.imshow("Face video_capture",frame)
+        cv2.imshow("Face video_capture", frame)
 
-def fetching_encoding():
-    print("here 1")
-    img_encoder()
-    global stop_threads
-    global Flag
+# Main function to fetch data and encode images
+def fetch_encode():
     try:
-        SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1bqCo5PmQVNV7ix_kQarfSCTYC72P1c-qvrmTcu_Xb4E/edit?usp=sharing'  # Your Google Spreadsheet URL
-        SHEET_NAME = 'Form Responses 1'  # Name of the specific sheet within your Google Spreadsheet
+        SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1bqCo5PmQVNV7ix_kQarfSCTYC72P1c-qvrmTcu_Xb4E/edit?usp=sharing'
+        SHEET_NAME = 'Form Responses 1'
 
         current_directory = os.path.dirname(os.path.abspath(__file__))
-        JSON_FILENAME = "sidp-facialrecognition-21f79db4b512"
-        SERVICE_ACCOUNT_FILE = os.path.join(current_directory, JSON_FILENAME+'.json')
+        JSON_FILENAME = ""
+        SERVICE_ACCOUNT_FILE = os.path.join(current_directory, JSON_FILENAME + '.json')
 
         scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
         creds = ServiceAccountCredentials.from_json_keyfile_name(SERVICE_ACCOUNT_FILE, scope)
@@ -165,7 +145,7 @@ def fetching_encoding():
 
         previous_file_names = set()
 
-        while stop_threads != True:
+        while True:
             time.sleep(10)
             spreadsheet = client.open_by_url(SPREADSHEET_URL)
             worksheet = spreadsheet.worksheet(SHEET_NAME)
@@ -174,7 +154,7 @@ def fetching_encoding():
             current_file_names = set()
             new_images_downloaded = False
 
-            for index, item in enumerate(data, start=2):
+            for index, item in enumerate(data, start=2):  # start=2 because row 1 is headers
                 if 'Name' in item and 'Guest_Profile_Picture' in item and 'Timestamp' in item:
                     name = item['Name']
                     image_url = item['Guest_Profile_Picture']
@@ -185,19 +165,12 @@ def fetching_encoding():
                     file_name = f"{sanitized_name}_{sanitized_timestamp}.jpg"
                     file_path = os.path.join(images_directory, file_name)
                     current_file_names.add(file_name)
-                    # print(current_file_names)
-                    print(file_path)
 
                     if not os.path.exists(file_path):
                         download_image_from_drive(image_url, images_directory, sanitized_name, sanitized_timestamp)
                         new_images_downloaded = True
                     else:
                         print(f"Data exists: '{file_name}'")
-
-                    image = Image.open(file_path)
-                    image = image.convert('RGB')
-                    new_image = image.resize((960,720))
-                    new_image.save(file_path)
 
                 else:
                     print("Missing 'Name', 'Guest_Profile_Picture', or 'Timestamp' field in record.")
@@ -207,59 +180,13 @@ def fetching_encoding():
             previous_file_names = current_file_names
 
             if new_images_downloaded:
-                Flag = True
                 img_encoder()
-                Flag = False
+                face_rec()  # Call face recognition function
 
     except KeyboardInterrupt:
         print("Process interrupted by user.")
     except Exception as e:
         print("An error occurred:", e)
-    print("here 2")
-
-stop_threads = False 
-Flag = False
-# creating  threads
-if __name__ == '__main__':
-    try:
-        T1 = threading.Thread(target=face_reg_runtime)
-        T2 = threading.Thread(target=fetching_encoding)
-
-        T1.start()
-        T2.start()
-
-        T1.join()
-        T2.join()
-
-    except Exception as e:
-        print(f"Exception in main: {e}")
         print(traceback.format_exc())
 
-    print("Program Terminated")
-
-
-"""
-PROGRESS REPORT
-Progress 1:
-    Create thread 1 which runs face_rec() function. When the function start it
-    will begin to detect the faces of individual that have been encoded in the 
-    EncodedFile.p. When q is pressed on the keyboard, the function will exit -
-    and wil stop the program. This can be use to stop the whole program execu-
-    tion.
-
-Progress 2:
-    Combined main_trans file with main.py file due to thread handling difficulties.
-    Successfully terminated the program by pressing Q on keyboard.
-
-Progress 3:
-    Successfully make the threads run together. The first problem encountered is
-    when a new registration happened and the EncodedFile.p need to be encoded again,
-    the threads will stop running due to file access conflict. The first approach is
-    to use thread management system. However, the structure of the program itself,
-    does not fit with the thread management. The successful approach is to disable
-    file reading in the face_recognition function. This allow the EncodedFile.p to
-    be able to encode again without interrupting the running threads.
-    Next task-> include GPS reading when individual face is detected.
-"""
-
-
+fetch_encode()
