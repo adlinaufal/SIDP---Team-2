@@ -9,7 +9,7 @@ from EncodingGenerator import img_encoder
 from PIL import Image, ImageDraw, ImageFont
 import traceback
 import serial
-from gps_utils import GetGPSData, uart_port
+from gps_utils_copy import GetGPSData, uart_port
 import cv2
 import pickle as pkl
 import face_recognition
@@ -182,7 +182,7 @@ def face_rec(client, spreadsheet_url, sheet_name):
                     matching_row = None
                     for row in data:
                         if row['Name'] == detected_name:
-                            if row['timestamp_id'] == detected_timestamp_id:
+                            if str(row['timestamp_id']) == detected_timestamp_id:
                                 matching_row = row
                                 break
 
