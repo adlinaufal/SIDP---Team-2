@@ -98,12 +98,8 @@ def update_location_in_sheet(name, timestamp_id, location_coord, client, spreads
                 row_name = item['Name']
                 row_timestamp_id = item['timestamp_id']
                 if row_name == name and row_timestamp_id == timestamp_id:
-                    current_value = worksheet.cell(index, worksheet.find('Location_coordinate').col).value
-                    if not current_value:  # Check if the cell is empty
-                        worksheet.update_cell(index, worksheet.find('Location_coordinate').col, location_coord)
-                        print(f"Updated location for {name} in row {index}: {location_coord}")
-                    else:
-                        print(f"{name} already checked in. Location not updating.")
+                    worksheet.update_cell(index, worksheet.find('Location_coordinate').col, location_coord)
+                    print(f"Updated location for {name} in row {index}: {location_coord}")
                     return True
 
         print(f"No matching row found for {name} with timestamp_id {timestamp_id}")
