@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 import re
 import requests
@@ -15,6 +16,11 @@ import pickle as pkl
 import face_recognition
 import numpy as np
 from lcd_testing import lcd_display
+import LCD2inch4_lib
+
+WHITE = 0xFF
+BLACK = 0x00
+SPI_DEVICE = "/dev/spidev1.0"
 
 # Function to extract file_id from Google Drive URL
 def extract_file_id(url):
@@ -110,8 +116,21 @@ def update_location_in_sheet(name, timestamp_id, location_coord, client, spreads
         print("An error occurred while updating the location:", e)
         return False
 
+#Function to display user image on lcd module
+def lcd_display(userId, disp):
+
+    disp.lcd_init_2inch4()
+
+    # Retrieve the image
+    image_path = os.path.join("images", f"{userId}.jpg")
+
+    # Display the obtained image
+    image = Image.open(image_path)
+    image = image.resize((320, 240))
+    disp.lcd_ShowImage(image, 0, 0)
+
 # Function to perform face recognition
-def face_rec(client, spreadsheet_url, sheet_name):
+def face_rec(client, spreadsheet_url, sheet_name, disp):
     frame_count = 0
     video_capture = cv2.VideoCapture('/dev/video4')
     video_capture.set(3, 250)
@@ -130,6 +149,9 @@ def face_rec(client, spreadsheet_url, sheet_name):
     data = worksheet.get_all_records()
 
     while video_capture.isOpened():
+        disp.lcd_init_2inch4()
+        disp.lcd_clear(BLACK)
+
         ret, frame = video_capture.read()
         if cv2.waitKey(1) & 0xFF == ord('q'):
             video_capture.release()
@@ -152,7 +174,7 @@ def face_rec(client, spreadsheet_url, sheet_name):
                 if matches[matchIndex]:
                     identified_id = individual_ID[matchIndex]
                     print(f"Face recognized - {identified_id}\n")
-                    lcd_display(identified_id)
+                    lcd_display(identified_id, disp)
 
                     detected_name = identified_id.split('_')[0].replace('-', ' ')  # Convert hyphens back to spaces
                     detected_timestamp_id = '_'.join(identified_id.split('_')[1:])
@@ -168,11 +190,14 @@ def face_rec(client, spreadsheet_url, sheet_name):
                     if matching_row:
                         name = matching_row['Name']
                         timestamp_id = matching_row['timestamp_id']
-                        existing_location = matching_row['Location_coordinate']
+                        current_location = matching_row['Location_coordinate']
 
-                        if existing_location is None or existing_location == "":
+                        if current_location:
+                            print(f"{name} (timestamp_id: {timestamp_id}) already has location")
+                        else:
                             location_coord = get_location()
                             print(f"Location for {name} (timestamp_id: {timestamp_id}): {location_coord}")
+
                             if not update_location_in_sheet(name, timestamp_id, location_coord, client, spreadsheet_url, sheet_name):
                                 print(f"Failed to update location for {name} with timestamp_id {timestamp_id}")
                     else:
@@ -183,6 +208,8 @@ def face_rec(client, spreadsheet_url, sheet_name):
 # Main function to fetch data and encode images
 def fetch_encode():
     try:
+        disp = LCD2inch4_lib.LCD_2inch4(11, 40, SPI_DEVICE)
+
         SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1bqCo5PmQVNV7ix_kQarfSCTYC72P1c-qvrmTcu_Xb4E/edit?usp=sharing'
         SHEET_NAME = 'Form Responses 1'
 
@@ -239,7 +266,7 @@ def fetch_encode():
 
             if new_images_downloaded:
                 img_encoder()
-                face_rec(client, SPREADSHEET_URL, SHEET_NAME)
+                face_rec(client, SPREADSHEET_URL, SHEET_NAME, disp)
 
     except KeyboardInterrupt:
         print("Process interrupted by user.")

@@ -112,7 +112,7 @@ def update_location_in_sheet(name, timestamp_id, location_coord, client, spreads
 # Function to perform face recognition
 def face_rec(client, spreadsheet_url, sheet_name):
     frame_count = 0
-    video_capture = cv2.VideoCapture(0)
+    video_capture = cv2.VideoCapture('/dev/video4')
     video_capture.set(3, 250)
     video_capture.set(4, 250)
 
@@ -167,12 +167,16 @@ def face_rec(client, spreadsheet_url, sheet_name):
                     if matching_row:
                         name = matching_row['Name']
                         timestamp_id = matching_row['timestamp_id']
-                        
-                        location_coord = get_location()
-                        print(f"Location for {name} (timestamp_id: {timestamp_id}): {location_coord}")
+                        current_location = matching_row['Location_coordinate']
 
-                        if not update_location_in_sheet(name, timestamp_id, location_coord, client, spreadsheet_url, sheet_name):
-                            print(f"Failed to update location for {name} with timestamp_id {timestamp_id}")
+                        if current_location:
+                            print(f"{name} (timestamp_id: {timestamp_id}) already has location")
+                        else:
+                            location_coord = get_location()
+                            print(f"Location for {name} (timestamp_id: {timestamp_id}): {location_coord}")
+
+                            if not update_location_in_sheet(name, timestamp_id, location_coord, client, spreadsheet_url, sheet_name):
+                                print(f"Failed to update location for {name} with timestamp_id {timestamp_id}")
                     else:
                         print(f"No matching record found for detected face: {detected_name}")
 
