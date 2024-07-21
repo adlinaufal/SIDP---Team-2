@@ -1,9 +1,10 @@
-import threading
+import multiprocessing
 import time
 import cv2
 import os
 import time
 import re
+import sys
 import requests
 from datetime import datetime
 import gspread
@@ -89,7 +90,7 @@ def get_location():
         else:
             print("GPS data not available. Retrying...")
             
-def face_reg_runtime():
+def face_reg_runtime(event):
     global stop_threads
     global Flag
     frame_count = 0
@@ -110,7 +111,7 @@ def face_reg_runtime():
 
         ret, frame = video_capture.read()
         if cv2.waitKey(1) & 0xFF == ord('q'):
-            stop_threads = True
+            event.set()
             video_capture.release() 
             cv2.destroyAllWindows()
             break
@@ -137,7 +138,7 @@ def face_reg_runtime():
 
         cv2.imshow("Face video_capture",frame)
 
-def fetching_encoding():
+def fetching_encoding(event):
     print("here 1")
     img_encoder()
     global stop_threads
@@ -160,7 +161,9 @@ def fetching_encoding():
 
         previous_file_names = set()
 
-        while stop_threads != True:
+        while True:
+            if event.is_set():
+                break
             time.sleep(10)
             spreadsheet = client.open_by_url(SPREADSHEET_URL)
             worksheet = spreadsheet.worksheet(SHEET_NAME)
@@ -192,16 +195,22 @@ def fetching_encoding():
                     # print(current_file_names)
                     print(file_path)
 
+                    # if not os.path.exists(file_path):
+                    #     download_image_from_drive(image_url, images_directory, sanitized_name, sanitized_timestamp)
+                    #     new_images_downloaded = True
+                        
+                    #     # Ask for location only when new data is detected
+                    #     location_coord = get_location()
+
+                    #     # Update location coordinate
+                    #     worksheet.update_cell(index, location_col, location_coord)
+                    #     print(f"Updated location for {name}: {location_coord}")
+                    # else:
+                    #     print(f"Data exists: '{file_name}'")
+
                     if not os.path.exists(file_path):
                         download_image_from_drive(image_url, images_directory, sanitized_name, sanitized_timestamp)
                         new_images_downloaded = True
-                        
-                        # Ask for location only when new data is detected
-                        location_coord = get_location()
-
-                        # Update location coordinate
-                        worksheet.update_cell(index, location_col, location_coord)
-                        print(f"Updated location for {name}: {location_coord}")
                     else:
                         print(f"Data exists: '{file_name}'")
 
@@ -221,7 +230,6 @@ def fetching_encoding():
                 Flag = True
                 img_encoder()
                 Flag = False
-
     except KeyboardInterrupt:
         print("Process interrupted by user.")
     except Exception as e:
@@ -233,14 +241,15 @@ Flag = False
 # creating  threads
 if __name__ == '__main__':
     try:
-        T1 = threading.Thread(target=face_reg_runtime)
-        T2 = threading.Thread(target=fetching_encoding)
+        event = multiprocessing.Event()
+        p1 = multiprocessing.Process(target=face_reg_runtime,args=(event,)) 
+        p2 = multiprocessing.Process(target=fetching_encoding,args=(event,))
 
-        T1.start()
-        T2.start()
+        p1.start()
+        p2.start()
 
-        T1.join()
-        T2.join()
+        p1.join()
+        p2.join()
 
     except Exception as e:
         print(f"Exception in main: {e}")
@@ -271,6 +280,6 @@ Progress 3:
     file reading in the face_recognition function. This allow the EncodedFile.p to
     be able to encode again without interrupting the running threads.
     Next task-> include GPS reading when individual face is detected.
+
+    Update: Opt to use multiprocessing as compared to threads
 """
-
-
