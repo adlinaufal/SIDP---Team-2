@@ -43,7 +43,7 @@ def face_rec():
                 matchIndex = np.argmin(faceDis)
                 if matches[matchIndex]:
                     print(individual_ID[matchIndex])
-                    lcd_display(imgS)
+                    lcd_display(individual_ID[matchIndex])
 
         cv2.imshow("Face video_captureture",frame)
 
