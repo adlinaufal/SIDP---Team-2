@@ -41,8 +41,6 @@ JSON_FILENAME = "sidp-facialrecognition-21f79db4b512"
 def face_reg_runtime():
     global stop_threads
     global Flag
-    global name_idx
-    T1.start()
     frame_count = 0
 
     if platform.system() == 'Windows':
@@ -90,7 +88,7 @@ def face_reg_runtime():
                     if matches[matchIndex]:
                         print(individual_ID[matchIndex])
                         name_idx = individual_ID[matchIndex]
-                        #lcd_display(name_idx)
+                        lcd_display(name_idx)
 
             cv2.imshow("Face video_capture", frame)
 
@@ -100,13 +98,11 @@ def face_reg_runtime():
             encodeListKnown, individual_ID = load_encoded_file()
             print("Reloaded:", individual_ID)
     
-def lcd_display():
+def lcd_display(name_idx):
     global stop_threads
-    global name_idx
     while not stop_threads:
         
         if name_idx:
-            lock.acquire()
             SPI_DEVICE = "/dev/spidev1.0"
 
             disp = LCD2inch4_lib.LCD_2inch4(11, 40, SPI_DEVICE)
@@ -124,7 +120,6 @@ def lcd_display():
             # Clear the display
             disp.lcd_init_2inch4()
             disp.lcd_clear(BLACK)
-            lock.release()
         else:
             continue
         
