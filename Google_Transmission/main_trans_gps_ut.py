@@ -145,27 +145,23 @@ def face_rec(client, spreadsheet_url, sheet_name):
                     detected_timestamp_id = '_'.join(identified_id.split('_')[1:])
 
                     # Check the spreadsheet for matching name and timestamp_id
-                    matching_row = 1
-                    rowData = None
-                    for row in data:
-                        matching_row = matching_row + 1
+                    for index, row in enumerate(data, start=2):  # start=2 because row 1 is headers
                         if row['Name'] == detected_name:
                             timestamp_id_data = f"{row['timestamp_id']}"
                             detected_timestamp_id = f"{detected_timestamp_id}"
-                            rowData = row
 
                             if timestamp_id_data == detected_timestamp_id:
-                                print(f"Matching row number: {matching_row}")
-                                name = rowData['Name']
-                                timestamp_id = rowData['timestamp_id']
-                                current_status = rowData['Status']
-                                current_location = rowData['Location_coordinate']
+                                print(f"Matching row number: {index}")
+                                name = row['Name']
+                                timestamp_id = row['timestamp_id']
+                                current_status = row['Status']
+                                current_location = row['Location_coordinate']
 
                                 if current_status == "Not yet check-in":
                                     location_coord = get_location()
                                     print(f"Location for {name} (timestamp_id: {timestamp_id}): {location_coord}")
 
-                                    if not update_location_in_sheet(matching_row, location_coord, client, spreadsheet_url, sheet_name):
+                                    if not update_location_in_sheet(index, location_coord, client, spreadsheet_url, sheet_name):
                                         print(f"Failed to update location for {name} with timestamp_id {timestamp_id}")
                                 else:
                                     print(f"Our records indicate this visitor has {current_status} previously. Their last recorded location was at {current_location}.")
