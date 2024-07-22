@@ -155,6 +155,7 @@ def face_rec(client, spreadsheet_url, sheet_name):
                             detected_timestamp_id = f"{detected_timestamp_id}"
                             if timestamp_id_data == detected_timestamp_id:
                                 matching_row = row
+                                print(f"Matching row number: {matching_row}")
                                 name = matching_row['Name']
                                 timestamp_id = matching_row['timestamp_id']
                                 current_status = matching_row['Status']
@@ -180,7 +181,7 @@ def fetch_encode():
         SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1bqCo5PmQVNV7ix_kQarfSCTYC72P1c-qvrmTcu_Xb4E/edit?usp=sharing'
         SHEET_NAME = 'Form Responses 1'
 
-        current_directory = os.path.dirname(os.path.abspath(_file_))
+        current_directory = os.path.dirname(os.path.abspath(__file__))
         JSON_FILENAME = ""
         SERVICE_ACCOUNT_FILE = os.path.join(current_directory, JSON_FILENAME + '.json')
 
