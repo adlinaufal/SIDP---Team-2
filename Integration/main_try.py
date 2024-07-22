@@ -19,7 +19,7 @@ JSON_FILENAME = "sidp-facialrecognition-21f79db4b512"
 
 # Function to get location from user input
 def get_location():
-    gps = serial.Serial(uart_port, baudrate=9600, timeout=0.5)
+    #gps = serial.Serial(uart_port, baudrate=9600, timeout=0.5)
     while True:
         latitude, longitude = GetGPSData(gps)
         if latitude is not None and longitude is not None:
@@ -123,7 +123,7 @@ def face_reg_runtime(stop_event, reload_event, client, spreadsheet_url, sheet_na
                                 current_status = row['Status']
                                 current_location = row['Location_coordinate']
 
-                                if current_status == "Not yet check-in":
+                                if current_status == "" or current_status is None:
                                     location_coord = get_location()
                                     print(f"Location for {name} (timestamp_id: {timestamp_id}): {location_coord}")
 
