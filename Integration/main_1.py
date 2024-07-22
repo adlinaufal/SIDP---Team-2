@@ -103,9 +103,8 @@ def face_reg_runtime():
 def lcd_display():
     global name_idx
     global stop_threads
-    lcd_id = name_idx
     while not stop_threads:
-        if lcd_id:
+        if name_idx:
 
             SPI_DEVICE = "/dev/spidev1.0"
 
@@ -124,7 +123,7 @@ def lcd_display():
             # Clear the display
             disp.lcd_init_2inch4()
             disp.lcd_clear(BLACK)
-            lcd_id = 0
+            time.sleep(5)
         else:
             continue
         
