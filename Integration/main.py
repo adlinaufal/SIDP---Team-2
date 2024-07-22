@@ -17,7 +17,9 @@ import pickle as pkl
 import face_recognition
 import numpy as np
 import serial
+import platform
 from gps_utils import GetGPSData, uart_port, CoordinatestoLocation
+
 os.system("taskset -p 0xff %d" % os.getpid())
 
 def extract_file_id(url):
