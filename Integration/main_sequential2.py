@@ -40,7 +40,7 @@ def camera():
         video_capture = cv2.VideoCapture(0)
                                                     
     else:
-        video_capture = cv2.VideoCapture('/dev/video4', cv2.CAP_V4L2)
+        video_capture = cv2.VideoCapture('/dev/video4', cv2.CAP_GSTREAMER)
 
     video_capture.set(3, 250)
     video_capture.set(4, 250)
