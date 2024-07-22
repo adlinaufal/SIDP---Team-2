@@ -106,7 +106,7 @@ def lcd_display():
     while not stop_threads:
         
         if name_idx:
-            #lock.acquire()
+            lock.acquire()
             SPI_DEVICE = "/dev/spidev1.0"
 
             disp = LCD2inch4_lib.LCD_2inch4(11, 40, SPI_DEVICE)
@@ -124,7 +124,7 @@ def lcd_display():
             # Clear the display
             disp.lcd_init_2inch4()
             disp.lcd_clear(BLACK)
-            #lock.release()
+            lock.release()
         else:
             continue
         
