@@ -92,6 +92,7 @@ def update_location_in_sheet(row_number, location_coord, client, spreadsheet_url
         spreadsheet = client.open_by_url(spreadsheet_url)
         worksheet = spreadsheet.worksheet(sheet_name)
         worksheet.update_cell(row_number, worksheet.find('Location_coordinate').col, location_coord)
+        worksheet.update_cell(row_number, worksheet.find('Status').col, "Checked-in")
         print(f"Updated location in row {row_number}: {location_coord}")
         return True
     except Exception as e:
@@ -148,20 +149,23 @@ def face_rec(client, spreadsheet_url, sheet_name):
                     matching_row = None
                     for row in data:
                         if row['Name'] == detected_name:
-                            if row['timestamp_id'] == detected_timestamp_id:
+                            print(type(f"{row['timestamp_id']}"))
+                            print(type(f"{detected_timestamp_id}"))
+                            if f"{row['timestamp_id']}" == f"{detected_timestamp_id}":
                                 matching_row = row
                                 name = matching_row['Name']
                                 timestamp_id = matching_row['timestamp_id']
+                                current_status = matching_row['Status']
                                 current_location = matching_row['Location_coordinate']
 
-                                if current_location == None or current_location == '':
+                                if current_status != "Checked-in":
                                     location_coord = get_location()
                                     print(f"Location for {name} (timestamp_id: {timestamp_id}): {location_coord}")
 
                                     if not update_location_in_sheet(matching_row, location_coord, client, spreadsheet_url, sheet_name):
                                         print(f"Failed to update location for {name} with timestamp_id {timestamp_id}")
                                 else:
-                                    print(f"Our records indicate this visitor has checked in previously. Their last recorded location was at {current_location}.")
+                                    print(f"Our records indicate this visitor has {current_status} previously. Their last recorded location was at {current_location}.")
                                 break
                             elif matching_row is None:
                                 print(f"{detected_name} is not found in database. Please register again.")
