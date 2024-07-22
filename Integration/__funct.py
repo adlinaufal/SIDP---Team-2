@@ -145,8 +145,9 @@ def download_img(current_directory,images_directory,JSON_FILENAME):
                 file_name = f"{sanitized_name}_{sanitized_timestamp}.jpg"
                 file_path = os.path.join(images_directory, file_name)
                 current_file_names.add(file_name)
-                # print(current_file_names)
-                print(file_path)
+                
+                # Update the Google Sheet with the sanitized timestamp in 'timestamp_id' column
+                worksheet.update_cell(index, worksheet.find('timestamp_id').col, sanitized_timestamp)
 
                 if not os.path.exists(file_path):
                     download_image_from_drive(image_url, images_directory, sanitized_name, sanitized_timestamp)

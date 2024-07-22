@@ -101,14 +101,15 @@ def face_reg_runtime(stop_event, reload_event, client, spreadsheet_url, sheet_na
 
                 matchIndex = np.argmin(faceDis)
                 if matches[matchIndex]:
-                    print(individual_ID[matchIndex])
-                    lcd_display(individual_ID[matchIndex])
+                    userID = individual_ID[matchIndex]
+                    print(userID)
+                    lcd_display(userID)
                     
                     data = worksheet.get_all_records()
-                    identified_id = individual_ID[matchIndex]
+                    userID = individual_ID[matchIndex]
 
-                    detected_name = identified_id.split('_')[0].replace('-', ' ')  # Convert hyphens back to spaces
-                    detected_timestamp_id = '_'.join(identified_id.split('_')[1:])
+                    detected_name = userID.split('_')[0].replace('-', ' ')  # Convert hyphens back to spaces
+                    detected_timestamp_id = '_'.join(userID.split('_')[1:])
 
                     # Check the spreadsheet for matching name and timestamp_id
                     for index, row in enumerate(data, start=2):  # start=2 because row 1 is headers
@@ -132,7 +133,7 @@ def face_reg_runtime(stop_event, reload_event, client, spreadsheet_url, sheet_na
                                     print(f"Our records indicate this visitor has {current_status} previously. Their last recorded location was at {current_location}.")
                                 break
                             else:
-                                print(f"{timestamp_id_data} is not found in database. Please register again.")
+                                print(f"{detected_name} is not found in database. Please register again.")
                                 break
                             
                         else:
@@ -164,7 +165,7 @@ if __name__ == '__main__':
     SHEET_NAME = 'Form Responses 1'
 
     current_directory = os.path.dirname(os.path.abspath(__file__))
-    JSON_FILENAME = ""
+    JSON_FILENAME = JSON_FILENAME
     SERVICE_ACCOUNT_FILE = os.path.join(current_directory, JSON_FILENAME + '.json')
     
     scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
