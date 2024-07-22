@@ -4,10 +4,11 @@ import face_recognition
 import numpy as np
 import os
 import platform
-from EncodingGenerator import img_encoder
-
+from __funct import img_encoder,create_img_file,download_img
+JSON_FILENAME = "sidp-facialrecognition-21f79db4b512"
 def face_rec():
-    img_encoder()
+    if download_img(JSON_FILENAME):
+        img_encoder
     frame_count = 0
     if platform.system() == 'Windows':
         video_capture = cv2.VideoCapture(0) #For webcam (HD Pro Webcam C920) connected to VisionFive2 board
