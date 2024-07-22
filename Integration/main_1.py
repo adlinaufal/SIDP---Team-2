@@ -124,6 +124,7 @@ def lcd_display():
             disp.lcd_init_2inch4()
             disp.lcd_clear(BLACK)
             time.sleep(5)
+            name_idx=0
         else:
             continue
         
