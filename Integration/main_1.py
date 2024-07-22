@@ -42,7 +42,7 @@ def face_reg_runtime():
     global stop_threads
     global Flag
     global name_idx
-    T1.start()
+    #T1.start()
     frame_count = 0
 
     if platform.system() == 'Windows':
@@ -90,7 +90,7 @@ def face_reg_runtime():
                     if matches[matchIndex]:
                         print(individual_ID[matchIndex])
                         name_idx = individual_ID[matchIndex]
-                        #lcd_display(individual_ID[matchIndex])
+                        lcd_display(name_idx)
 
             cv2.imshow("Face video_capture", frame)
 
@@ -100,8 +100,7 @@ def face_reg_runtime():
             encodeListKnown, individual_ID = load_encoded_file()
             print("Reloaded:", individual_ID)
     
-def lcd_display():
-    global name_idx
+def lcd_display(name_idx):
     global stop_threads
     while not stop_threads:
         if name_idx:
@@ -118,12 +117,11 @@ def lcd_display():
             image = Image.open(image_path)
             image = image.resize((320, 240))
             disp.lcd_ShowImage(image, 0, 0)
-            time.sleep(5)
+            time.sleep(3)
 
             # Clear the display
             disp.lcd_init_2inch4()
             disp.lcd_clear(BLACK)
-            time.sleep(5)
             name_idx=0
         else:
             continue
