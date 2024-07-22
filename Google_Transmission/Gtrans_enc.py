@@ -14,8 +14,11 @@ def img_encoder():
     individual_ID=[]
 
     for path in PathList:
-        imgList.append(cv2.imread(os.path.join(folderPath,path)))
+        image = cv2.imread(os.path.join(folderPath,path))
+        image.astype('uint8')
+        imgList.append(image)
         individual_ID.append(path[:-4])
+        #print(individual_ID)
 
     #Creating the encodings
     def findEncodings(imagesList):
@@ -37,6 +40,4 @@ def img_encoder():
     pkl.dump(encodeListKnown_withID,file)
     file.close()
     print("File Saved")
-
 img_encoder()
-
