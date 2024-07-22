@@ -1,3 +1,4 @@
+import multiprocessing
 import os
 import time
 import re
@@ -254,8 +255,6 @@ def fetch_encode():
             else:
                 print("No changes detected in the spreadsheet.")
 
-            # Run face recognition regardless of changes
-
             # Wait for a short period before checking again
             time.sleep(5)
 
@@ -265,17 +264,51 @@ def fetch_encode():
         print("An error occurred:", e)
         print(traceback.format_exc())
 
-# Run the main function
+def fetch_encode_process():
+    while True:
+        try:
+            fetch_encode()
+        except Exception as e:
+            print("An error occurred in fetch_encode process:", e)
+            print(traceback.format_exc())
+        time.sleep(5)  # Wait for 5 seconds before running again
+
+def face_rec_process(client, spreadsheet_url, sheet_name):
+    while True:
+        try:
+            face_rec(client, spreadsheet_url, sheet_name)
+        except Exception as e:
+            print("An error occurred in face_rec process:", e)
+            print(traceback.format_exc())
+        time.sleep(1)  # Short delay before running again
+
 if __name__ == "__main__":
     SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1bqCo5PmQVNV7ix_kQarfSCTYC72P1c-qvrmTcu_Xb4E/edit?usp=sharing'
     SHEET_NAME = 'Form Responses 1'
-    client = gspread.authorize(creds)
     current_directory = os.path.dirname(os.path.abspath(__file__))
     JSON_FILENAME = ""
     SERVICE_ACCOUNT_FILE = os.path.join(current_directory, JSON_FILENAME + '.json')
 
     scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
     creds = ServiceAccountCredentials.from_json_keyfile_name(SERVICE_ACCOUNT_FILE, scope)
+    client = gspread.authorize(creds)
 
-    while True:
-        face_rec(client, SPREADSHEET_URL, SHEET_NAME)
+    # Create two processes
+    fetch_process = multiprocessing.Process(target=fetch_encode_process)
+    face_rec_process = multiprocessing.Process(target=face_rec_process, args=(client, SPREADSHEET_URL, SHEET_NAME))
+
+    # Start both processes
+    fetch_process.start()
+    face_rec_process.start()
+
+    try:
+        # Wait for both processes to complete (which they won't, as they're infinite loops)
+        fetch_process.join()
+        face_rec_process.join()
+    except KeyboardInterrupt:
+        print("Terminating processes...")
+        fetch_process.terminate()
+        face_rec_process.terminate()
+        fetch_process.join()
+        face_rec_process.join()
+        print("Processes terminated.")
