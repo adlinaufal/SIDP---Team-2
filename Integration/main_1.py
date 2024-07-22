@@ -112,7 +112,7 @@ def lcd_display():
             disp.lcd_init_2inch4()
 
             # Retrieve the image
-            image_path = os.path.join("images", f"{lcd_id}.jpg")
+            image_path = os.path.join("images", f"{name_idx}.jpg")
 
             # Display the obtained image
             image = Image.open(image_path)
