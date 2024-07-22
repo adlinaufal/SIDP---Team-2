@@ -41,6 +41,8 @@ JSON_FILENAME = "sidp-facialrecognition-21f79db4b512"
 def face_reg_runtime():
     global stop_threads
     global Flag
+    global name_idx
+    #T1.start()
     frame_count = 0
 
     if platform.system() == 'Windows':
@@ -101,8 +103,8 @@ def face_reg_runtime():
 def lcd_display(name_idx):
     global stop_threads
     while not stop_threads:
-        
         if name_idx:
+
             SPI_DEVICE = "/dev/spidev1.0"
 
             disp = LCD2inch4_lib.LCD_2inch4(11, 40, SPI_DEVICE)
@@ -115,15 +117,14 @@ def lcd_display(name_idx):
             image = Image.open(image_path)
             image = image.resize((320, 240))
             disp.lcd_ShowImage(image, 0, 0)
-            time.sleep(2)
+            time.sleep(3)
 
             # Clear the display
             disp.lcd_init_2inch4()
             disp.lcd_clear(BLACK)
-            time.sleep(2)
+            name_idx=0
         else:
             continue
-        
         
 
 def fetching_encoding(current_directory,images_directory,JSON_FILENAME):
@@ -150,6 +151,7 @@ def fetching_encoding(current_directory,images_directory,JSON_FILENAME):
 
 stop_threads = False 
 Flag = False
+name_idx = []
 lock = threading.RLock()
 # creating  threads
 if __name__ == '__main__':
@@ -163,12 +165,14 @@ if __name__ == '__main__':
         
         p1 = multiprocessing.Process(target=face_reg_runtime) 
         p2 = multiprocessing.Process(target=fetching_encoding,args=(current_directory,images_directory,JSON_FILENAME,))
+        T1 = threading.Thread(target=lcd_display)
 
         p1.start()
         p2.start()
 
         p1.join()
         p2.join()
+        T1.join()
 
     except Exception as e:
         print(f"Exception in main: {e}")
