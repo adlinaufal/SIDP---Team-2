@@ -107,7 +107,7 @@ def face_rec(client, spreadsheet_url, sheet_name):
     video_capture.set(3, 250)
     video_capture.set(4, 250)
 
-    absolute_path = os.path.dirname(_file_)
+    absolute_path = os.path.dirname(__file__)
     with open(os.path.join(absolute_path, "EncodedFile.p"), "rb") as file:
         encodeListKnown_withID = pkl.load(file)
     encodeListKnown, individual_ID = encodeListKnown_withID
