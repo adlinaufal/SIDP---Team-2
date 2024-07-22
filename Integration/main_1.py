@@ -76,10 +76,11 @@ def face_reg_runtime():
 
             cv2.imshow("Face video_capture", frame)
 
-        print(individual_ID)
-        time.sleep(15)
-        encodeListKnown, individual_ID = load_encoded_file()
-        print("Reloaded:", individual_ID)
+        else:
+            print(individual_ID)
+            time.sleep(10)
+            encodeListKnown, individual_ID = load_encoded_file()
+            print("Reloaded:", individual_ID)
     
 
         
