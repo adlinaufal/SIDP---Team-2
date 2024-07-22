@@ -241,7 +241,7 @@ def fetch_encode():
 
             if new_images_downloaded:
                 img_encoder()
-                face_rec(client, SPREADSHEET_URL, SHEET_NAME)
+            face_rec(client, SPREADSHEET_URL, SHEET_NAME)
 
     except KeyboardInterrupt:
         print("Process interrupted by user.")
