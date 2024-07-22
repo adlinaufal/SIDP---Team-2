@@ -166,7 +166,7 @@ def face_rec(client, spreadsheet_url, sheet_name):
                                 current_status = rowData['Status']
                                 current_location = rowData['Location_coordinate']
 
-                                if current_status != "Checked-in":
+                                if current_status == "Not yet check-in":
                                     location_coord = get_location()
                                     print(f"Location for {name} (timestamp_id: {timestamp_id}): {location_coord}")
 
@@ -227,6 +227,7 @@ def fetch_encode():
 
                     # Update the Google Sheet with the sanitized timestamp in 'timestamp_id' column
                     worksheet.update_cell(index, worksheet.find('timestamp_id').col, sanitized_timestamp)
+                    worksheet.update_cell(index, worksheet.find('Status').col, "Not yet check-in")
 
                     if not os.path.exists(file_path):
                         download_image_from_drive(image_url, images_directory, sanitized_name, sanitized_timestamp)
