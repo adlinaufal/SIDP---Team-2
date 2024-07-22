@@ -18,6 +18,7 @@ import threading
 import queue
 from memory_profiler import profile
 import sys
+import io
 
 # Global variables
 global_frame = None
@@ -59,10 +60,17 @@ def download_image_from_drive(url, folder_path, name, timestamp):
         timestamp = timestamp.replace(' ', '').replace('/', '').replace(':', '')
 
         file_name = os.path.join(folder_path, f"{name}_{timestamp}.jpg")
-        with open(file_name, 'wb') as f:
-            f.write(response.content)
+        
+        # Open the image using PIL
+        img = Image.open(io.BytesIO(response.content))
+        
+        # Resize the image
+        img_resized = img.resize((1024, 768), Image.LANCZOS)
+        
+        # Save the resized image
+        img_resized.save(file_name, 'JPEG')
 
-        print(f"Downloaded and saved file to '{file_name}'")
+        print(f"Downloaded, resized, and saved file to '{file_name}'")
         return file_name
 
     except ValueError as e:
