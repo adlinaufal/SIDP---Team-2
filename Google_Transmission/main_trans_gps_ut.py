@@ -148,15 +148,15 @@ def face_rec(client, spreadsheet_url, sheet_name):
                     detected_timestamp_id = '_'.join(identified_id.split('_')[1:])
 
                     # Check the spreadsheet for matching name and timestamp_id
-                    matching_row = None
+                    matching_row = 1
                     for row in data:
+                        matching_row = matching_row + 1
                         if row['Name'] == detected_name:
                             print(type(f"{row['timestamp_id']}"))
                             print(type(f"{detected_timestamp_id}"))
                             timestamp_id_data = f"{row['timestamp_id']}"
                             detected_timestamp_id = f"{detected_timestamp_id}"
                             if timestamp_id_data == detected_timestamp_id:
-                                matching_row = row
                                 print(f"Matching row number: {matching_row}")
                                 name = matching_row['Name']
                                 timestamp_id = matching_row['timestamp_id']
@@ -172,8 +172,10 @@ def face_rec(client, spreadsheet_url, sheet_name):
                                 else:
                                     print(f"Our records indicate this visitor has {current_status} previously. Their last recorded location was at {current_location}.")
                                 break
-                            elif matching_row is None:
-                                print(f"{detected_name} is not found in database. Please register again.")
+                            else:
+                                print(f"{timestamp_id_data} is not found in database. Please register again.")
+                        else:
+                            print(f"{detected_name} is not found in database. Please register again.")
 
         cv2.imshow("Face video_capture", frame)
 
