@@ -102,10 +102,10 @@ def lcd_display(name_idx):
     global stop_threads
     if name_idx:
 
-        SPI_DEVICE = "/dev/spidev1.0"
+        # SPI_DEVICE = "/dev/spidev1.0"
 
-        disp = LCD2inch4_lib.LCD_2inch4(11, 40, SPI_DEVICE)
-        disp.lcd_init_2inch4()
+        # disp = LCD2inch4_lib.LCD_2inch4(11, 40, SPI_DEVICE)
+        # disp.lcd_init_2inch4()
 
         # Retrieve the image
         image_path = os.path.join("images", f"{name_idx}.jpg")
@@ -147,6 +147,10 @@ stop_threads = False
 Flag = False
 # creating  threads
 if __name__ == '__main__':
+    SPI_DEVICE = "/dev/spidev1.0"
+    global disp 
+    disp = LCD2inch4_lib.LCD_2inch4(11, 40, SPI_DEVICE)
+    disp.lcd_init_2inch4()
     current_directory = os.path.dirname(os.path.abspath(__file__))
     images_directory = os.path.join(current_directory, 'images')
     try:
