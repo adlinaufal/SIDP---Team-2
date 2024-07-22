@@ -95,7 +95,7 @@ def face_reg_runtime():
 
         else:
             print(individual_ID)
-            time.sleep(12)
+            time.sleep(13)
             encodeListKnown, individual_ID = load_encoded_file()
             print("Reloaded:", individual_ID)
     
