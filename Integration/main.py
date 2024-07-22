@@ -18,7 +18,7 @@ import face_recognition
 import numpy as np
 import serial
 from gps_utils import GetGPSData, uart_port, CoordinatestoLocation
-
+os.system("taskset -p 0xff %d" % os.getpid())
 
 def extract_file_id(url):
     pattern = r'id=([a-zA-Z0-9-_]+)'
@@ -235,6 +235,7 @@ def fetching_encoding(event):
     except Exception as e:
         print("An error occurred:", e)
     print("here 2")
+    return
 
 stop_threads = False 
 Flag = False

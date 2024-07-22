@@ -3,13 +3,17 @@ import pickle as pkl
 import face_recognition
 import numpy as np
 import os
-
+import platform
+from EncodingGenerator import img_encoder
 
 def face_rec():
-    
+    img_encoder()
     frame_count = 0
-    video_capture = cv2.VideoCapture(0) #For webcam (HD Pro Webcam C920) connected to VisionFive2 board
+    if platform.system() == 'Windows':
+        video_capture = cv2.VideoCapture(0) #For webcam (HD Pro Webcam C920) connected to VisionFive2 board
                                                     #'/dev/video4'
+    else:
+        video_capture = cv2.VideoCapture('/dev/video4')
     video_capture.set(3, 250)
     video_capture.set(4, 250)
 
