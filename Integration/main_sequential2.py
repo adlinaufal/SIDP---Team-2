@@ -13,21 +13,9 @@ flag = False
 def face_rec():
     global stop_threads
     global flag
-    if download_img(current_directory,images_directory,JSON_FILENAME):
-        img_encoder()
-
-    if platform.system() == 'Windows':
-        video_capture = cv2.VideoCapture(0) #For webcam (HD Pro Webcam C920) connected to VisionFive2 board
-                                                    #'/dev/video4'
-    else:
-        video_capture = cv2.VideoCapture('/dev/video4')
-
-    video_capture.set(3, 250)
-    video_capture.set(4, 250)
-    T1 = threading.Thread(target=camera,args=(video_capture,))
+    T1 = threading.Thread(target=camera)
     T1.start()
     while not stop_threads: 
-        time.sleep(10)
         if download_img(current_directory,images_directory,JSON_FILENAME):
             flag = True
             img_encoder()
@@ -37,17 +25,23 @@ def face_rec():
             flag = True
             img_encoder()
             flag = False
+        time.sleep(10)
     T1.join()
     return
 
 
 
-def camera(video_capture):
+def camera():
+    time.sleep(8)
     global stop_threads
     global flag
     frame_count = 0
-    video_capture = cv2.VideoCapture(0) #For webcam (HD Pro Webcam C920) connected to VisionFive2 board
-                                                    #'/dev/video4'
+    if platform.system() == 'Windows':
+        video_capture = cv2.VideoCapture(0)
+                                                    
+    else:
+        video_capture = cv2.VideoCapture('/dev/video4', cv2.CAP_V4L2)
+
     video_capture.set(3, 250)
     video_capture.set(4, 250)
 
