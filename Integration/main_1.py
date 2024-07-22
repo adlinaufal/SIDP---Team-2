@@ -104,7 +104,7 @@ def lcd_display():
     global name_idx
     global stop_threads
     while not stop_threads:
-        if name_idx[0]:
+        if name_idx:
 
             SPI_DEVICE = "/dev/spidev1.0"
 
@@ -112,7 +112,7 @@ def lcd_display():
             disp.lcd_init_2inch4()
 
             # Retrieve the image
-            image_path = os.path.join("images", f"{name_idx[0]}.jpg")
+            image_path = os.path.join("images", f"{name_idx}.jpg")
 
             # Display the obtained image
             image = Image.open(image_path)
@@ -151,7 +151,7 @@ def fetching_encoding(current_directory,images_directory,JSON_FILENAME):
 
 stop_threads = False 
 Flag = False
-name_idx = [0]
+name_idx = []
 # creating  threads
 if __name__ == '__main__':
     current_directory = os.path.dirname(os.path.abspath(__file__))
