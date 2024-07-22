@@ -29,24 +29,16 @@ def get_location():
             return "4.382456, 119.123123"
         
 # Function to update the location coordinates in Google Sheets
-def update_location_in_sheet(name, timestamp_id, location_coord, client, spreadsheet_url, sheet_name):
+def update_location_in_sheet(row_number, location_coord, client, spreadsheet_url, sheet_name):
     try:
+        print(f"Row number: {row_number}")
+        print(f"Location coordinate: {location_coord}")
         spreadsheet = client.open_by_url(spreadsheet_url)
         worksheet = spreadsheet.worksheet(sheet_name)
-        data = worksheet.get_all_records()
-
-        for index, item in enumerate(data, start=2):  # start=2 because row 1 is headers
-            if 'Name' in item and 'timestamp_id' in item:
-                row_name = item['Name']
-                row_timestamp_id = item['timestamp_id']
-                if row_name == name and row_timestamp_id == timestamp_id:
-                    worksheet.update_cell(index, worksheet.find('Location_coordinate').col, location_coord)
-                    print(f"Updated location for {name} in row {index}: {location_coord}")
-                    return True
-
-        print(f"No matching row found for {name} with timestamp_id {timestamp_id}")
-        return False
-
+        worksheet.update_cell(row_number, worksheet.find('Location_coordinate').col, location_coord)
+        worksheet.update_cell(row_number, worksheet.find('Status').col, "Checked-in")
+        print(f"Updated location in row {row_number}: {location_coord}")
+        return True
     except Exception as e:
         print("An error occurred while updating the location:", e)
         return False
