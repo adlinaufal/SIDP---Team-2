@@ -74,6 +74,7 @@ def face_reg_runtime():
             cv2.imshow("Face video_capture",frame)
 
         else:
+            file.close()
             time.sleep(5)
             with open(os.path.join(absolute_path, "EncodedFile.p"), "rb") as file:
                 encodeListKnown_withID = pkl.load(file)
