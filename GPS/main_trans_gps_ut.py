@@ -170,7 +170,9 @@ def face_rec(client, spreadsheet_url, sheet_name):
 
                 matchIndex = np.argmin(faceDis)
                 if matches[matchIndex]:
+                    data = worksheet.get_all_records()
                     identified_id = individual_ID[matchIndex]
+
                     print(f"Face recognized - {identified_id}\n")
                     lcd_display(identified_id)
 
@@ -178,28 +180,33 @@ def face_rec(client, spreadsheet_url, sheet_name):
                     detected_timestamp_id = '_'.join(identified_id.split('_')[1:])
 
                     # Check the spreadsheet for matching name and timestamp_id
-                    matching_row = None
-                    for row in data:
+                    for index, row in enumerate(data, start=2):  # start=2 because row 1 is headers
                         if row['Name'] == detected_name:
-                            if str(row['timestamp_id']) == detected_timestamp_id:
-                                matching_row = row
+                            timestamp_id_data = f"{row['timestamp_id']}"
+                            detected_timestamp_id = f"{detected_timestamp_id}"
+
+                            if timestamp_id_data == detected_timestamp_id:
+                                name = row['Name']
+                                timestamp_id = row['timestamp_id']
+                                current_status = row['Status']
+                                current_location = row['Location_coordinate']
+
+                                if current_status == "Not yet check-in":
+                                    location_coord = get_location()
+                                    print(f"Location for {name} (timestamp_id: {timestamp_id}): {location_coord}")
+
+                                    if not update_location_in_sheet(index, location_coord, client, spreadsheet_url, sheet_name):
+                                        print(f"Failed to update location for {name} with timestamp_id {timestamp_id}")
+                                else:
+                                    print(f"Our records indicate this visitor has {current_status} previously. Their last recorded location was at {current_location}.")
                                 break
-
-                    if matching_row:
-                        name = matching_row['Name']
-                        timestamp_id = matching_row['timestamp_id']
-                        existing_location = matching_row['Location_coordinate']
-
-                        if existing_location:
-                            print(f"{name} (timestamp_id: {timestamp_id}) already has location")
+                            else:
+                                print(f"{timestamp_id_data} is not found in database. Please register again.")
+                                break
+                            
                         else:
-                            location_coord = get_location()
-                            print(f"Location for {name} (timestamp_id: {timestamp_id}): {location_coord}")
-
-                            if not update_location_in_sheet(name, timestamp_id, location_coord, client, spreadsheet_url, sheet_name):
-                                print(f"Failed to update location for {name} with timestamp_id {timestamp_id}")
-                    else:
-                        print(f"No matching record found for detected face: {detected_name}")
+                            print(f"{detected_name} is not found in database. Please register again.")
+                            break
 
         cv2.imshow("Face video_capture", frame)
 
@@ -262,7 +269,8 @@ def fetch_encode():
 
             if new_images_downloaded:
                 img_encoder()
-                face_rec(client, SPREADSHEET_URL, SHEET_NAME)
+            
+            face_rec(client, SPREADSHEET_URL, SHEET_NAME)
 
     except KeyboardInterrupt:
         print("Process interrupted by user.")
