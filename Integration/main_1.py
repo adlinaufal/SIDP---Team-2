@@ -103,8 +103,9 @@ def face_reg_runtime():
 def lcd_display():
     global name_idx
     global stop_threads
+    lcd_id = name_idx
     while not stop_threads:
-        if name_idx:
+        if lcd_id:
 
             SPI_DEVICE = "/dev/spidev1.0"
 
@@ -112,7 +113,7 @@ def lcd_display():
             disp.lcd_init_2inch4()
 
             # Retrieve the image
-            image_path = os.path.join("images", f"{name_idx}.jpg")
+            image_path = os.path.join("images", f"{lcd_id}.jpg")
 
             # Display the obtained image
             image = Image.open(image_path)
@@ -123,6 +124,7 @@ def lcd_display():
             # Clear the display
             disp.lcd_init_2inch4()
             disp.lcd_clear(BLACK)
+            lcd_id = 0
         else:
             continue
         
