@@ -63,43 +63,41 @@ def face_reg_runtime():
     print(individual_ID)
 
     while video_capture.isOpened():
-        try:
-            ret, frame = video_capture.read()
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                stop_threads = True
-                video_capture.release() 
-                cv2.destroyAllWindows()
-                break
 
-            frame_count += 1
-            if not Flag:
-                
-                if frame_count % 20 == 0:
-                    imgS = cv2.resize(frame, (0,0), None, 0.25, 0.25)
-                    imgS = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        ret, frame = video_capture.read()
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            stop_threads = True
+            video_capture.release() 
+            cv2.destroyAllWindows()
+            break
 
-                    faceCurFrame = face_recognition.face_locations(imgS)
-                    encodeCurFrame = face_recognition.face_encodings(imgS, faceCurFrame)
+        frame_count += 1
+        if not Flag:
+            
+            if frame_count % 20 == 0:
+                imgS = cv2.resize(frame, (0,0), None, 0.25, 0.25)
+                imgS = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-                    for encodeFace, faceLoc in zip(encodeCurFrame, faceCurFrame):
-                        matches = face_recognition.compare_faces(encodeListKnown, encodeFace)
-                        faceDis = face_recognition.face_distance(encodeListKnown, encodeFace)
+                faceCurFrame = face_recognition.face_locations(imgS)
+                encodeCurFrame = face_recognition.face_encodings(imgS, faceCurFrame)
 
-                        matchIndex = np.argmin(faceDis)
-                        if matches[matchIndex]:
-                            print(individual_ID[matchIndex])
-                            name_idx = individual_ID[matchIndex]
-                            lcd_display(individual_ID[matchIndex])
+                for encodeFace, faceLoc in zip(encodeCurFrame, faceCurFrame):
+                    matches = face_recognition.compare_faces(encodeListKnown, encodeFace)
+                    faceDis = face_recognition.face_distance(encodeListKnown, encodeFace)
 
-                cv2.imshow("Face video_capture", frame)
+                    matchIndex = np.argmin(faceDis)
+                    if matches[matchIndex]:
+                        print(individual_ID[matchIndex])
+                        name_idx = individual_ID[matchIndex]
+                        lcd_display(individual_ID[matchIndex])
 
-            else:
-                print(individual_ID)
-                time.sleep(12)
-                encodeListKnown, individual_ID = load_encoded_file()
-                print("Reloaded:", individual_ID)
-        except:
-            continue
+            cv2.imshow("Face video_capture", frame)
+
+        else:
+            print(individual_ID)
+            time.sleep(12)
+            encodeListKnown, individual_ID = load_encoded_file()
+            print("Reloaded:", individual_ID)
     
 def lcd_display(name_idx):
     global stop_threads
