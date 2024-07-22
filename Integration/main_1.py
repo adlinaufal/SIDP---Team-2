@@ -22,6 +22,8 @@ import platform
 from PIL import Image
 import io
 from __funct import img_encoder,download_img,remove_deleted_images
+from lcd_utils import lcd_display
+
 JSON_FILENAME = "sidp-facialrecognition-21f79db4b512"
           
 def face_reg_runtime():
@@ -73,6 +75,7 @@ def face_reg_runtime():
                     matchIndex = np.argmin(faceDis)
                     if matches[matchIndex]:
                         print(individual_ID[matchIndex])
+                        lcd_display(individual_ID[matchIndex])
 
             cv2.imshow("Face video_capture", frame)
 
