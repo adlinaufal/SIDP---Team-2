@@ -90,7 +90,7 @@ def face_reg_runtime():
                     if matches[matchIndex]:
                         print(individual_ID[matchIndex])
                         name_idx = individual_ID[matchIndex]
-                        lcd_display(name_idx)
+                        #lcd_display(name_idx)
 
             cv2.imshow("Face video_capture", frame)
 
