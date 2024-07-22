@@ -76,7 +76,7 @@ def face_reg_runtime():
             cv2.imshow("Face video_capture", frame)
 
         else:
-            time.sleep(5)
+            time.sleep(10)
             encodeListKnown, individual_ID = load_encoded_file()
             print("Reloaded:", individual_ID)
     
@@ -91,10 +91,14 @@ def fetching_encoding(current_directory,images_directory,JSON_FILENAME):
     while not stop_threads: 
         if download_img(current_directory,images_directory,JSON_FILENAME):
             Flag = True
+            encoded_file = os.path.join(current_directory, "EncodedFile.p")
+            os.remove(encoded_file)
             img_encoder()
             Flag = False
         if remove_deleted_images(current_directory,images_directory,JSON_FILENAME):
             Flag = True
+            encoded_file = os.path.join(current_directory, "EncodedFile.p")
+            os.remove(encoded_file)
             img_encoder()
             Flag = False
         time.sleep(10)
