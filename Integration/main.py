@@ -94,7 +94,11 @@ def face_reg_runtime(event):
     global stop_threads
     global Flag
     frame_count = 0
-    video_capture = cv2.VideoCapture(0) #For webcam (HD Pro Webcam C920) connected to VisionFive2 board
+    if platform.system() == 'Windows':
+        video_capture = cv2.VideoCapture(0)
+                                                    
+    else:
+        video_capture = cv2.VideoCapture('/dev/video4') #For webcam (HD Pro Webcam C920) connected to VisionFive2 board
                                                     #'/dev/video4'
     video_capture.set(3, 250)
     video_capture.set(4, 250)
