@@ -42,7 +42,7 @@ def face_reg_runtime():
     global stop_threads
     global Flag
     global name_idx
-    #T1.start()
+    T1.start()
     frame_count = 0
 
     if platform.system() == 'Windows':
@@ -103,6 +103,7 @@ def face_reg_runtime():
 def lcd_display(name_idx):
     global stop_threads
     while not stop_threads:
+        lock.acquire()
         if name_idx:
 
             SPI_DEVICE = "/dev/spidev1.0"
@@ -122,9 +123,9 @@ def lcd_display(name_idx):
             # Clear the display
             disp.lcd_init_2inch4()
             disp.lcd_clear(BLACK)
-            name_idx=0
         else:
             continue
+        lock.release()
         
 
 def fetching_encoding(current_directory,images_directory,JSON_FILENAME):
@@ -152,6 +153,7 @@ def fetching_encoding(current_directory,images_directory,JSON_FILENAME):
 stop_threads = False 
 Flag = False
 name_idx = []
+lock = threading.RLock()
 # creating  threads
 if __name__ == '__main__':
     current_directory = os.path.dirname(os.path.abspath(__file__))
