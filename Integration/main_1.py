@@ -100,8 +100,9 @@ def face_reg_runtime():
             encodeListKnown, individual_ID = load_encoded_file()
             print("Reloaded:", individual_ID)
     
-def lcd_display(name_idx):
+def lcd_display():
     global stop_threads
+    global name_idx
     while not stop_threads:
         
         if name_idx:
