@@ -78,6 +78,7 @@ def face_reg_runtime():
 
             else:
                 time.sleep(5)
+                file = open(os.path.join(absolute_path, "EncodedFile.p"), "rb")
                 try:
                     encodeListKnown_withID = pkl.load(file)
                     encodeListKnown, individual_ID = encodeListKnown_withID
