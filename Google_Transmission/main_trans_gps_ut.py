@@ -157,6 +157,8 @@ def face_rec(client, spreadsheet_url, sheet_name):
                             print(type(f"{detected_timestamp_id}"))
                             timestamp_id_data = f"{row['timestamp_id']}"
                             detected_timestamp_id = f"{detected_timestamp_id}"
+                            rowData = row
+
                             if timestamp_id_data == detected_timestamp_id:
                                 print(f"Matching row number: {matching_row}")
                                 name = rowData['Name']
