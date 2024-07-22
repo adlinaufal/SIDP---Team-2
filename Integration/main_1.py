@@ -41,7 +41,6 @@ JSON_FILENAME = "sidp-facialrecognition-21f79db4b512"
 def face_reg_runtime():
     global stop_threads
     global Flag
-    T1.start()
     frame_count = 0
 
     if platform.system() == 'Windows':
@@ -161,14 +160,12 @@ if __name__ == '__main__':
         
         p1 = multiprocessing.Process(target=face_reg_runtime) 
         p2 = multiprocessing.Process(target=fetching_encoding,args=(current_directory,images_directory,JSON_FILENAME,))
-        T1 = threading.Thread(target=lcd_display)
 
         p1.start()
         p2.start()
 
         p1.join()
         p2.join()
-        T1.join()
 
     except Exception as e:
         print(f"Exception in main: {e}")
