@@ -114,7 +114,7 @@ def lcd_display(name_idx):
         image = Image.open(image_path)
         image = image.resize((320, 240))
         disp.lcd_ShowImage(image, 0, 0)
-        time.sleep(1.5)
+        time.sleep(3)
 
         # Clear the display
         disp.lcd_init_2inch4()
