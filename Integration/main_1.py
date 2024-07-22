@@ -41,8 +41,6 @@ JSON_FILENAME = "sidp-facialrecognition-21f79db4b512"
 def face_reg_runtime():
     global stop_threads
     global Flag
-    global name_idx
-    #T1.start()
     frame_count = 0
 
     if platform.system() == 'Windows':
@@ -90,7 +88,24 @@ def face_reg_runtime():
                     if matches[matchIndex]:
                         print(individual_ID[matchIndex])
                         name_idx = individual_ID[matchIndex]
-                        lcd_display(name_idx)
+                        
+                        SPI_DEVICE = "/dev/spidev1.0"
+
+                        disp = LCD2inch4_lib.LCD_2inch4(11, 40, SPI_DEVICE)
+                        disp.lcd_init_2inch4()
+
+                        # Retrieve the image
+                        image_path = os.path.join("images", f"{name_idx}.jpg")
+
+                        # Display the obtained image
+                        image = Image.open(image_path)
+                        image = image.resize((320, 240))
+                        disp.lcd_ShowImage(image, 0, 0)
+                        time.sleep(2)
+
+                        # Clear the display
+                        disp.lcd_init_2inch4()
+                        disp.lcd_clear(BLACK)
 
             cv2.imshow("Face video_capture", frame)
 
@@ -100,31 +115,30 @@ def face_reg_runtime():
             encodeListKnown, individual_ID = load_encoded_file()
             print("Reloaded:", individual_ID)
     
-def lcd_display(name_idx):
-    global stop_threads
-    while not stop_threads:
-        if name_idx:
+# def lcd_display(name_idx):
+#     global stop_threads
+#     while not stop_threads:
+#         if name_idx:
 
-            SPI_DEVICE = "/dev/spidev1.0"
+#             SPI_DEVICE = "/dev/spidev1.0"
 
-            disp = LCD2inch4_lib.LCD_2inch4(11, 40, SPI_DEVICE)
-            disp.lcd_init_2inch4()
+#             disp = LCD2inch4_lib.LCD_2inch4(11, 40, SPI_DEVICE)
+#             disp.lcd_init_2inch4()
 
-            # Retrieve the image
-            image_path = os.path.join("images", f"{name_idx}.jpg")
+#             # Retrieve the image
+#             image_path = os.path.join("images", f"{name_idx}.jpg")
 
-            # Display the obtained image
-            image = Image.open(image_path)
-            image = image.resize((320, 240))
-            disp.lcd_ShowImage(image, 0, 0)
-            time.sleep(3)
+#             # Display the obtained image
+#             image = Image.open(image_path)
+#             image = image.resize((320, 240))
+#             disp.lcd_ShowImage(image, 0, 0)
+#             time.sleep(2)
 
-            # Clear the display
-            disp.lcd_init_2inch4()
-            disp.lcd_clear(BLACK)
-            name_idx=0
-        else:
-            continue
+#             # Clear the display
+#             disp.lcd_init_2inch4()
+#             disp.lcd_clear(BLACK)
+#         else:
+#             continue
         
 
 def fetching_encoding(current_directory,images_directory,JSON_FILENAME):
@@ -151,8 +165,6 @@ def fetching_encoding(current_directory,images_directory,JSON_FILENAME):
 
 stop_threads = False 
 Flag = False
-name_idx = []
-lock = threading.RLock()
 # creating  threads
 if __name__ == '__main__':
     current_directory = os.path.dirname(os.path.abspath(__file__))
