@@ -177,8 +177,10 @@ def face_rec(client, spreadsheet_url, sheet_name):
                                 break
                             else:
                                 print(f"{timestamp_id_data} is not found in database. Please register again.")
+                                break
                         else:
                             print(f"{detected_name} is not found in database. Please register again.")
+                            break
 
         cv2.imshow("Face video_capture", frame)
 
