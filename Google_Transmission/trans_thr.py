@@ -16,11 +16,26 @@ import face_recognition
 import numpy as np
 import threading
 import queue
+from memory_profiler import profile
+import sys
 
 # Global variables
 global_frame = None
 frame_queue = queue.Queue(maxsize=1)
 stop_event = threading.Event()
+encode_lock = threading.Lock()
+
+# Set up exception handling
+def handle_exception(exc_type, exc_value, exc_traceback):
+    print("An uncaught exception occurred:")
+    traceback.print_exception(exc_type, exc_value, exc_traceback)
+
+sys.excepthook = handle_exception
+
+# Print library versions
+print(f"OpenCV version: {cv2.__version__}")
+print(f"face_recognition version: {face_recognition.__version__}")
+print(f"numpy version: {np.__version__}")
 
 def extract_file_id(url):
     pattern = r'id=([a-zA-Z0-9-_]+)'
@@ -191,6 +206,20 @@ def process_recognized_face(client, spreadsheet_url, sheet_name, detected_name, 
             else:
                 print(f"Failed to process recognized face after {max_retries} attempts: {e}")
 
+def safe_img_encoder():
+    with encode_lock:
+        try:
+            img_encoder()
+        except Exception as e:
+            print(f"Error in img_encoder: {e}")
+            traceback.print_exc()
+
+def check_file_size(file_path, max_size_mb=10):
+    size_mb = os.path.getsize(file_path) / (1024 * 1024)
+    if size_mb > max_size_mb:
+        print(f"Warning: Large file detected. {file_path} is {size_mb:.2f} MB")
+
+@profile
 def fetch_encode(client, spreadsheet_url, sheet_name):
     current_directory = os.path.dirname(os.path.abspath(__file__))
     images_directory = os.path.join(current_directory, 'images')
@@ -201,6 +230,7 @@ def fetch_encode(client, spreadsheet_url, sheet_name):
 
     while not stop_event.is_set():
         try:
+            print("Fetching new data...")
             spreadsheet = client.open_by_url(spreadsheet_url)
             worksheet = spreadsheet.worksheet(sheet_name)
             data = worksheet.get_all_records()
@@ -225,6 +255,7 @@ def fetch_encode(client, spreadsheet_url, sheet_name):
 
                     if not os.path.exists(file_path):
                         download_image_from_drive(image_url, images_directory, sanitized_name, sanitized_timestamp)
+                        check_file_size(file_path)
                         new_images_downloaded = True
                     else:
                         print(f"Data exists: '{file_name}'")
@@ -235,13 +266,17 @@ def fetch_encode(client, spreadsheet_url, sheet_name):
             previous_file_names = current_file_names
 
             if new_images_downloaded:
-                img_encoder()
+                print(f"New images downloaded. Current files: {current_file_names}")
+                print("Starting img_encoder...")
+                safe_img_encoder()
+                print("img_encoder completed.")
 
         except Exception as e:
             print(f"An error occurred in fetch_encode: {e}")
-            print(traceback.format_exc())
+            traceback.print_exc()
 
-        time.sleep(5)  # Reduced sleep time for more frequent checks
+        print("Sleeping for 5 seconds...")
+        time.sleep(5)
 
 def main():
     try:
@@ -249,7 +284,7 @@ def main():
         SHEET_NAME = 'Form Responses 1'
 
         current_directory = os.path.dirname(os.path.abspath(__file__))
-        JSON_FILENAME = ""
+        JSON_FILENAME = ""  # Replace with your actual JSON filename
         SERVICE_ACCOUNT_FILE = os.path.join(current_directory, JSON_FILENAME + '.json')
 
         scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']

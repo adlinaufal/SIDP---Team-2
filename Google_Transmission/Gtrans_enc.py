@@ -38,5 +38,5 @@ def img_encoder():
     file.close()
     print("File Saved")
 
-#img_encoder()
+img_encoder()
 
