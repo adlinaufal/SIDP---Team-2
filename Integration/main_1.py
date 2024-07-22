@@ -95,7 +95,7 @@ def face_reg_runtime():
 
             else:
                 print(individual_ID)
-                time.sleep(10)
+                time.sleep(12)
                 encodeListKnown, individual_ID = load_encoded_file()
                 print("Reloaded:", individual_ID)
         except:
@@ -122,7 +122,7 @@ def lcd_display(name_idx):
         # Clear the display
         disp.lcd_init_2inch4()
         disp.lcd_clear(BLACK)
-        time.sleep(1.5)
+        time.sleep(2)
         
 
 def fetching_encoding(current_directory,images_directory,JSON_FILENAME):
