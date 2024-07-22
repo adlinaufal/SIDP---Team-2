@@ -101,6 +101,7 @@ def update_location_in_sheet(row_number, location_coord, client, spreadsheet_url
 
 # Function to perform face recognition
 def face_rec(client, spreadsheet_url, sheet_name):
+    fetch_encode()
     frame_count = 0
     video_capture = cv2.VideoCapture('/dev/video4')
     video_capture.set(3, 250)
@@ -139,7 +140,7 @@ def face_rec(client, spreadsheet_url, sheet_name):
                 matchIndex = np.argmin(faceDis)
                 if matches[matchIndex]:
                     data = worksheet.get_all_records()
-                    
+
                     identified_id = individual_ID[matchIndex]
                     print(f"Face recognized - {identified_id}\n")
                     detected_name = identified_id.split('_')[0].replace('-', ' ')
@@ -170,9 +171,12 @@ def face_rec(client, spreadsheet_url, sheet_name):
                             else:
                                 print(f"{timestamp_id_data} is not found in database. Please register again.")
                                 break
+                            
                         else:
                             print(f"{detected_name} is not found in database. Please register again.")
                             break
+
+                    break
 
         cv2.imshow("Face video_capture", frame)
 
@@ -251,7 +255,6 @@ def fetch_encode():
                 print("No changes detected in the spreadsheet.")
 
             # Run face recognition regardless of changes
-            face_rec(client, SPREADSHEET_URL, SHEET_NAME)
 
             # Wait for a short period before checking again
             time.sleep(5)
@@ -264,4 +267,15 @@ def fetch_encode():
 
 # Run the main function
 if __name__ == "__main__":
-    fetch_encode()
+    SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1bqCo5PmQVNV7ix_kQarfSCTYC72P1c-qvrmTcu_Xb4E/edit?usp=sharing'
+    SHEET_NAME = 'Form Responses 1'
+    client = gspread.authorize(creds)
+    current_directory = os.path.dirname(os.path.abspath(__file__))
+    JSON_FILENAME = ""
+    SERVICE_ACCOUNT_FILE = os.path.join(current_directory, JSON_FILENAME + '.json')
+
+    scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
+    creds = ServiceAccountCredentials.from_json_keyfile_name(SERVICE_ACCOUNT_FILE, scope)
+
+    while True:
+        face_rec(client, SPREADSHEET_URL, SHEET_NAME)
