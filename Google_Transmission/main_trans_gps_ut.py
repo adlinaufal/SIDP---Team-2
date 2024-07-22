@@ -105,7 +105,7 @@ def update_location_in_sheet(row_number, location_coord, client, spreadsheet_url
 # Function to perform face recognition
 def face_rec(client, spreadsheet_url, sheet_name):
     frame_count = 0
-    video_capture = cv2.VideoCapture(0)
+    video_capture = cv2.VideoCapture('/dev/video4')
     video_capture.set(3, 250)
     video_capture.set(4, 250)
 
@@ -149,6 +149,7 @@ def face_rec(client, spreadsheet_url, sheet_name):
 
                     # Check the spreadsheet for matching name and timestamp_id
                     matching_row = 1
+                    rowData = None
                     for row in data:
                         matching_row = matching_row + 1
                         if row['Name'] == detected_name:
@@ -158,10 +159,10 @@ def face_rec(client, spreadsheet_url, sheet_name):
                             detected_timestamp_id = f"{detected_timestamp_id}"
                             if timestamp_id_data == detected_timestamp_id:
                                 print(f"Matching row number: {matching_row}")
-                                name = matching_row['Name']
-                                timestamp_id = matching_row['timestamp_id']
-                                current_status = matching_row['Status']
-                                current_location = matching_row['Location_coordinate']
+                                name = rowData['Name']
+                                timestamp_id = rowData['timestamp_id']
+                                current_status = rowData['Status']
+                                current_location = rowData['Location_coordinate']
 
                                 if current_status != "Checked-in":
                                     location_coord = get_location()
