@@ -20,13 +20,13 @@ JSON_FILENAME = "sidp-facialrecognition-21f79db4b512"
 # Function to get location from user input
 def get_location():
     #gps = serial.Serial(uart_port, baudrate=9600, timeout=0.5)
-    while True:
-        latitude, longitude = GetGPSData(gps)
-        if latitude is not None and longitude is not None:
+    #while True:
+    #    latitude, longitude = GetGPSData(gps)
+    #    if latitude is not None and longitude is not None:
             #latitude = f"{latitude:.6f}"
             #longitude = f"{longitude:.6f}"
             #return f"{latitude:.6f}, {longitude:.6f}"
-            return "4.382456, 119.123123"
+    return "4.382456, 119.123123"
         
 # Function to update the location coordinates in Google Sheets
 def update_location_in_sheet(row_number, location_coord, client, spreadsheet_url, sheet_name):
