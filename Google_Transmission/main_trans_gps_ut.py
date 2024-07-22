@@ -89,6 +89,8 @@ def get_location():
 # Function to update the location coordinates in Google Sheets
 def update_location_in_sheet(row_number, location_coord, client, spreadsheet_url, sheet_name):
     try:
+        print(f"Row number: {row_number}")
+        print(f"Location coordinate: {location_coord}")
         spreadsheet = client.open_by_url(spreadsheet_url)
         worksheet = spreadsheet.worksheet(sheet_name)
         worksheet.update_cell(row_number, worksheet.find('Location_coordinate').col, location_coord)
