@@ -87,36 +87,26 @@ def get_location():
             return f"{latitude},{longitude}"
 
 # Function to update the location coordinates in Google Sheets
-def update_location_in_sheet(name, timestamp_id, location_coord, client, spreadsheet_url, sheet_name):
+def update_location_in_sheet(row_number, location_coord, client, spreadsheet_url, sheet_name):
     try:
         spreadsheet = client.open_by_url(spreadsheet_url)
         worksheet = spreadsheet.worksheet(sheet_name)
-        data = worksheet.get_all_records()
-
-        for index, item in enumerate(data, start=2):  # start=2 because row 1 is headers
-            if 'Name' in item and 'timestamp_id' in item:
-                row_name = item['Name']
-                row_timestamp_id = item['timestamp_id']
-                if row_name == name and row_timestamp_id == timestamp_id:
-                    worksheet.update_cell(index, worksheet.find('Location_coordinate').col, location_coord)
-                    print(f"Updated location for {name} in row {index}: {location_coord}")
-                    return True
-
-        print(f"No matching row found for {name} with timestamp_id {timestamp_id}")
-        return False
-
+        worksheet.update_cell(row_number, worksheet.find('Location_coordinate').col, location_coord)
+        print(f"Updated location in row {row_number}: {location_coord}")
+        return True
     except Exception as e:
         print("An error occurred while updating the location:", e)
         return False
 
+
 # Function to perform face recognition
 def face_rec(client, spreadsheet_url, sheet_name):
     frame_count = 0
-    video_capture = cv2.VideoCapture('/dev/video4')
+    video_capture = cv2.VideoCapture(0)
     video_capture.set(3, 250)
     video_capture.set(4, 250)
 
-    absolute_path = os.path.dirname(__file__)
+    absolute_path = os.path.dirname(_file_)
     with open(os.path.join(absolute_path, "EncodedFile.p"), "rb") as file:
         encodeListKnown_withID = pkl.load(file)
     encodeListKnown, individual_ID = encodeListKnown_withID
@@ -152,7 +142,7 @@ def face_rec(client, spreadsheet_url, sheet_name):
                     identified_id = individual_ID[matchIndex]
                     print(f"Face recognized - {identified_id}\n")
                     detected_name = identified_id.split('_')[0].replace('-', ' ')  # Convert hyphens back to spaces
-                    detected_timestamp_id = '_'.join(identified_id.split('_')[1:])
+                    detected_timestamp_id = ''.join(identified_id.split('')[1:])
 
                     # Check the spreadsheet for matching name and timestamp_id
                     matching_row = None
@@ -160,25 +150,21 @@ def face_rec(client, spreadsheet_url, sheet_name):
                         if row['Name'] == detected_name:
                             if row['timestamp_id'] == detected_timestamp_id:
                                 matching_row = row
+                                name = matching_row['Name']
+                                timestamp_id = matching_row['timestamp_id']
+                                current_location = matching_row['Location_coordinate']
+
+                                if current_location == None or current_location == '':
+                                    location_coord = get_location()
+                                    print(f"Location for {name} (timestamp_id: {timestamp_id}): {location_coord}")
+
+                                    if not update_location_in_sheet(matching_row, location_coord, client, spreadsheet_url, sheet_name):
+                                        print(f"Failed to update location for {name} with timestamp_id {timestamp_id}")
+                                else:
+                                    print(f"Our records indicate this visitor has checked in previously. Their last recorded location was at {current_location}.")
                                 break
                             elif matching_row is None:
-                                matching_row = row  # Keep this as a potential match if no exact match is found
-
-                    if matching_row:
-                        name = matching_row['Name']
-                        timestamp_id = matching_row['timestamp_id']
-                        current_location = matching_row['Location_coordinate']
-
-                        if current_location:
-                            print(f"{name} (timestamp_id: {timestamp_id}) already has location")
-                        else:
-                            location_coord = get_location()
-                            print(f"Location for {name} (timestamp_id: {timestamp_id}): {location_coord}")
-
-                            if not update_location_in_sheet(name, timestamp_id, location_coord, client, spreadsheet_url, sheet_name):
-                                print(f"Failed to update location for {name} with timestamp_id {timestamp_id}")
-                    else:
-                        print(f"No matching record found for detected face: {detected_name}")
+                                print(f"{detected_name} is not found in database. Please register again.")
 
         cv2.imshow("Face video_capture", frame)
 
@@ -188,7 +174,7 @@ def fetch_encode():
         SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1bqCo5PmQVNV7ix_kQarfSCTYC72P1c-qvrmTcu_Xb4E/edit?usp=sharing'
         SHEET_NAME = 'Form Responses 1'
 
-        current_directory = os.path.dirname(os.path.abspath(__file__))
+        current_directory = os.path.dirname(os.path.abspath(_file_))
         JSON_FILENAME = ""
         SERVICE_ACCOUNT_FILE = os.path.join(current_directory, JSON_FILENAME + '.json')
 
@@ -249,5 +235,5 @@ def fetch_encode():
         print("An error occurred:", e)
         print(traceback.format_exc())
 
-if __name__ == "__main__":
-    fetch_encode()
+
+fetch_encode()
