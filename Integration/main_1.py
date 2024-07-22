@@ -115,11 +115,12 @@ def lcd_display(name_idx):
             image = Image.open(image_path)
             image = image.resize((320, 240))
             disp.lcd_ShowImage(image, 0, 0)
-            time.sleep(3)
+            time.sleep(2)
 
             # Clear the display
             disp.lcd_init_2inch4()
             disp.lcd_clear(BLACK)
+            time.sleep(2)
         else:
             continue
         
@@ -149,7 +150,6 @@ def fetching_encoding(current_directory,images_directory,JSON_FILENAME):
 
 stop_threads = False 
 Flag = False
-name_idx = []
 lock = threading.RLock()
 # creating  threads
 if __name__ == '__main__':
@@ -163,14 +163,12 @@ if __name__ == '__main__':
         
         p1 = multiprocessing.Process(target=face_reg_runtime) 
         p2 = multiprocessing.Process(target=fetching_encoding,args=(current_directory,images_directory,JSON_FILENAME,))
-        T1 = threading.Thread(target=lcd_display)
 
         p1.start()
         p2.start()
 
         p1.join()
         p2.join()
-        T1.join()
 
     except Exception as e:
         print(f"Exception in main: {e}")
