@@ -143,7 +143,7 @@ def face_rec(client, spreadsheet_url, sheet_name):
                     identified_id = individual_ID[matchIndex]
                     print(f"Face recognized - {identified_id}\n")
                     detected_name = identified_id.split('_')[0].replace('-', ' ')  # Convert hyphens back to spaces
-                    detected_timestamp_id = ''.join(identified_id.split('')[1:])
+                    detected_timestamp_id = '_'.join(identified_id.split('_')[1:])
 
                     # Check the spreadsheet for matching name and timestamp_id
                     matching_row = None
@@ -151,7 +151,9 @@ def face_rec(client, spreadsheet_url, sheet_name):
                         if row['Name'] == detected_name:
                             print(type(f"{row['timestamp_id']}"))
                             print(type(f"{detected_timestamp_id}"))
-                            if f"{row['timestamp_id']}" == f"{detected_timestamp_id}":
+                            timestamp_id_data = f"{row['timestamp_id']}"
+                            detected_timestamp_id = f"{detected_timestamp_id}"
+                            if timestamp_id_data == detected_timestamp_id:
                                 matching_row = row
                                 name = matching_row['Name']
                                 timestamp_id = matching_row['timestamp_id']
