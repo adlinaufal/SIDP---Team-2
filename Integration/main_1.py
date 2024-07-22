@@ -38,47 +38,52 @@ def face_reg_runtime():
     video_capture.set(4, 250)
 
     absolute_path = os.path.dirname(__file__)
-    with open(os.path.join(absolute_path, "EncodedFile.p"), "rb") as file:
+    file = open(os.path.join(absolute_path, "EncodedFile.p"), "rb")
+    try:
         encodeListKnown_withID = pkl.load(file)
-    encodeListKnown, individual_ID = encodeListKnown_withID
+        encodeListKnown, individual_ID = encodeListKnown_withID
+    finally:
+        file.close()
 
-    print(individual_ID)
+        print(individual_ID)
 
-    while video_capture.isOpened():
+        while video_capture.isOpened():
 
-        ret, frame = video_capture.read()
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            stop_threads = True
-            video_capture.release() 
-            cv2.destroyAllWindows()
-            break
-        
-        frame_count +=1
-        if not Flag:
-            if frame_count % 20 == 0:
-                
-                imgS = cv2.resize(frame, (0,0), None, 0.25, 0.25)
-                imgS = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            ret, frame = video_capture.read()
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                stop_threads = True
+                video_capture.release() 
+                cv2.destroyAllWindows()
+                break
+            
+            frame_count +=1
+            if not Flag:
+                if frame_count % 20 == 0:
+                    
+                    imgS = cv2.resize(frame, (0,0), None, 0.25, 0.25)
+                    imgS = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-                faceCurFrame = face_recognition.face_locations(imgS)
-                encodeCurFrame = face_recognition.face_encodings(imgS, faceCurFrame)
+                    faceCurFrame = face_recognition.face_locations(imgS)
+                    encodeCurFrame = face_recognition.face_encodings(imgS, faceCurFrame)
 
-                for encodeFace,faceLoc in zip(encodeCurFrame, faceCurFrame):
-                    matches = face_recognition.compare_faces(encodeListKnown, encodeFace)
-                    faceDis = face_recognition.face_distance(encodeListKnown, encodeFace)
+                    for encodeFace,faceLoc in zip(encodeCurFrame, faceCurFrame):
+                        matches = face_recognition.compare_faces(encodeListKnown, encodeFace)
+                        faceDis = face_recognition.face_distance(encodeListKnown, encodeFace)
 
-                    matchIndex = np.argmin(faceDis)
-                    if matches[matchIndex]:
-                        print(individual_ID[matchIndex])
+                        matchIndex = np.argmin(faceDis)
+                        if matches[matchIndex]:
+                            print(individual_ID[matchIndex])
 
-            cv2.imshow("Face video_capture",frame)
+                cv2.imshow("Face video_capture",frame)
 
-        else:
-            file.close()
-            time.sleep(5)
-            with open(os.path.join(absolute_path, "EncodedFile.p"), "rb") as file:
-                encodeListKnown_withID = pkl.load(file)
-            encodeListKnown, individual_ID = encodeListKnown_withID
+            else:
+                time.sleep(5)
+                try:
+                    encodeListKnown_withID = pkl.load(file)
+                    encodeListKnown, individual_ID = encodeListKnown_withID
+                finally:
+                    file.close()
+    
 
         
 
