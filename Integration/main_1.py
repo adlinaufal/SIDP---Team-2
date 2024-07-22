@@ -58,6 +58,7 @@ def face_reg_runtime():
 
         frame_count += 1
         if not Flag:
+            
             if frame_count % 20 == 0:
                 imgS = cv2.resize(frame, (0,0), None, 0.25, 0.25)
                 imgS = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -75,10 +76,10 @@ def face_reg_runtime():
 
             cv2.imshow("Face video_capture", frame)
 
-        else:
-            time.sleep(10)
-            encodeListKnown, individual_ID = load_encoded_file()
-            print("Reloaded:", individual_ID)
+        print(individual_ID)
+        time.sleep(15)
+        encodeListKnown, individual_ID = load_encoded_file()
+        print("Reloaded:", individual_ID)
     
 
         
