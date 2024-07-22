@@ -16,7 +16,6 @@ import face_recognition
 import numpy as np
 from lcd_testing import lcd_display
 import LCD2inch4_lib
-import asyncio
 
 WHITE = 0xFF
 BLACK = 0x00
@@ -112,7 +111,7 @@ def update_location_in_sheet(name, timestamp_id, location_coord, client, spreads
         print("An error occurred while updating the location:", e)
         return False
 
-async def lcd_display(userId):
+def lcd_display(userId):
     SPI_DEVICE = "/dev/spidev1.0"
 
     disp = LCD2inch4_lib.LCD_2inch4(11, 40, SPI_DEVICE)
@@ -126,7 +125,7 @@ async def lcd_display(userId):
     image = image.resize((320, 240))
     disp.lcd_ShowImage(image, 0, 0)
 
-    await asyncio.sleep(5)
+    time.sleep(5)
     
     #clear lcd screen
     disp.lcd_clear(BLACK)
