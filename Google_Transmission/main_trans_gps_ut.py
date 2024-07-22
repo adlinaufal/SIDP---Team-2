@@ -116,7 +116,6 @@ def face_rec(client, spreadsheet_url, sheet_name):
     # Get the spreadsheet data
     spreadsheet = client.open_by_url(spreadsheet_url)
     worksheet = spreadsheet.worksheet(sheet_name)
-    data = worksheet.get_all_records()
 
     while video_capture.isOpened():
         ret, frame = video_capture.read()
@@ -139,6 +138,8 @@ def face_rec(client, spreadsheet_url, sheet_name):
 
                 matchIndex = np.argmin(faceDis)
                 if matches[matchIndex]:
+                    data = worksheet.get_all_records()
+                    
                     identified_id = individual_ID[matchIndex]
                     print(f"Face recognized - {identified_id}\n")
                     detected_name = identified_id.split('_')[0].replace('-', ' ')
