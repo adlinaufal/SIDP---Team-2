@@ -2,28 +2,44 @@ import multiprocessing
 import time
 import cv2
 import os
-import re
-import sys
-import requests
-from datetime import datetime
-import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from Gtrans_enc import img_encoder
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image
 import traceback
-import threading
 import pickle as pkl
 import face_recognition
 import numpy as np
-import serial
-from gps_utils import GetGPSData, uart_port, CoordinatestoLocation
 import platform
-from PIL import Image
-import io
 from __funct import img_encoder, download_img, remove_deleted_images
 from lcd_utils import lcd_display
+import time
+import threading
 
 JSON_FILENAME = "sidp-facialrecognition-21f79db4b512"
+
+# Function to display the image on the LCD screen
+def lcd_display(userId):
+    SPI_DEVICE = "/dev/spidev1.0"
+    disp = LCD2inch4_lib.LCD_2inch4(11, 40, SPI_DEVICE)
+    disp.lcd_init_2inch4()
+
+    # Retrieve the image
+    image_path = os.path.join("images", f"{userId}.jpg")
+
+    # Display the obtained image
+    image = Image.open(image_path)
+    image = image.resize((320, 240))
+    disp.lcd_ShowImage(image, 0, 0)
+    time.sleep(5)
+
+    # Clear the display
+    disp.lcd_init_2inch4()
+    disp.lcd_clear(BLACK)
+
+# Function to handle the LCD display in a separate thread
+def display_user_on_lcd(userId):
+    display_thread = threading.Thread(target=lcd_display, args=(userId,))
+    display_thread.start()
 
 def face_reg_runtime(stop_event, reload_event):
     frame_count = 0
@@ -70,8 +86,9 @@ def face_reg_runtime(stop_event, reload_event):
 
                 matchIndex = np.argmin(faceDis)
                 if matches[matchIndex]:
-                    print(individual_ID[matchIndex])
-                    lcd_display(individual_ID[matchIndex])
+                    userID = individual_ID[matchIndex]
+                    print(userID)
+                    display_user_on_lcd(userID)
 
         cv2.imshow("Face video_capture", frame)
 
