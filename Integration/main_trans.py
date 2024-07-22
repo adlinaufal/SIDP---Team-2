@@ -86,7 +86,7 @@ def fetch_encode():
         SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1bqCo5PmQVNV7ix_kQarfSCTYC72P1c-qvrmTcu_Xb4E/edit?usp=sharing'  # Your Google Spreadsheet URL
         SHEET_NAME = 'Form Responses 1'  # Name of the specific sheet within your Google Spreadsheet
 
-        current_directory = os.path.dirname(os.path.abspath(__file__))#[done1]
+        current_directory = os.path.dirname(os.path.abspath(__file__))
         JSON_FILENAME = "sidp-facialrecognition-21f79db4b512"
         SERVICE_ACCOUNT_FILE = os.path.join(current_directory, JSON_FILENAME+'.json')
 
@@ -94,9 +94,9 @@ def fetch_encode():
         creds = ServiceAccountCredentials.from_json_keyfile_name(SERVICE_ACCOUNT_FILE, scope)
         client = gspread.authorize(creds)
 
-        images_directory = os.path.join(current_directory, 'images')#[done1]
-        if not os.path.exists(images_directory):#[done1]
-            os.makedirs(images_directory)#[done1]
+        images_directory = os.path.join(current_directory, 'images')
+        if not os.path.exists(images_directory):
+            os.makedirs(images_directory)
 
         previous_file_names = set()
 
