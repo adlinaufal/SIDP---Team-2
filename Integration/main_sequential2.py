@@ -45,22 +45,31 @@ def face_rec():
 def camera(video_capture):
     global stop_threads
     global flag
+    frame_count = 0
+    video_capture = cv2.VideoCapture(0) #For webcam (HD Pro Webcam C920) connected to VisionFive2 board
+                                                    #'/dev/video4'
+    video_capture.set(3, 250)
+    video_capture.set(4, 250)
+
+    #Load Encoding file
     absolute_path = os.path.dirname(__file__)
     with open(os.path.join(absolute_path, "EncodedFile.p"), "rb") as file:
         encodeListKnown_withID = pkl.load(file)
-    encodeListKnown,individual_ID = encodeListKnown_withID
+    encodeListKnown, individual_ID = encodeListKnown_withID
+
+    print(individual_ID)# to check id's loaded
 
     while video_capture.isOpened(): 
-        frame_count = 0
+        
         ret, frame = video_capture.read()
         if cv2.waitKey(1) & 0xFF == ord('q'):
-            video_capture.release() 
-            cv2.destroyAllWindows()
+            video_capture.release()
             stop_threads = True
+            cv2.destroyAllWindows()
             return True
-        
-        if not flag:
-            frame_count +=1
+
+        frame_count +=1
+        if flag == False:
             if frame_count % 20 == 0:
                 
                 imgS = cv2.resize(frame, (0,0), None, 0.25, 0.25)
@@ -82,9 +91,7 @@ def camera(video_capture):
             time.sleep(2)
             with open(os.path.join(absolute_path, "EncodedFile.p"), "rb") as file:
                 encodeListKnown_withID = pkl.load(file)
-            encodeListKnown,individual_ID = encodeListKnown_withID
-
-        cv2.imshow("Face video_capture",frame)
+            encodeListKnown, individual_ID = encodeListKnown_withID
 
 
 if __name__ == "__main__":
