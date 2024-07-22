@@ -23,12 +23,26 @@ from PIL import Image
 import io
 from __funct import img_encoder,download_img,remove_deleted_images
 from lcd_utils import lcd_display
+import os
+import sys
+import time
+import logging
+from PIL import Image, ImageDraw, ImageFont
+
+sys.path.append("..")
+
+import LCD2inch4_lib
+
+WHITE = 0xFF
+BLACK = 0x00
 
 JSON_FILENAME = "sidp-facialrecognition-21f79db4b512"
           
 def face_reg_runtime():
     global stop_threads
     global Flag
+    global name_idx
+    T1.start()
     frame_count = 0
 
     if platform.system() == 'Windows':
@@ -75,7 +89,8 @@ def face_reg_runtime():
                     matchIndex = np.argmin(faceDis)
                     if matches[matchIndex]:
                         print(individual_ID[matchIndex])
-                        lcd_display(individual_ID[matchIndex])
+                        name_idx = individual_ID[matchIndex]
+                        #lcd_display(individual_ID[matchIndex])
 
             cv2.imshow("Face video_capture", frame)
 
@@ -85,13 +100,38 @@ def face_reg_runtime():
             encodeListKnown, individual_ID = load_encoded_file()
             print("Reloaded:", individual_ID)
     
+def lcd_display():
+    global name_idx
+    global stop_threads
+    while not stop_threads:
+        if name_idx[0]:
 
+            SPI_DEVICE = "/dev/spidev1.0"
+
+            disp = LCD2inch4_lib.LCD_2inch4(11, 40, SPI_DEVICE)
+            disp.lcd_init_2inch4()
+
+            # Retrieve the image
+            image_path = os.path.join("images", f"{name_idx[0]}.jpg")
+
+            # Display the obtained image
+            image = Image.open(image_path)
+            image = image.resize((320, 240))
+            disp.lcd_ShowImage(image, 0, 0)
+            time.sleep(5)
+
+            # Clear the display
+            disp.lcd_init_2inch4()
+            disp.lcd_clear(BLACK)
+        else:
+            continue
         
 
 def fetching_encoding(current_directory,images_directory,JSON_FILENAME):
     print("here 1")
     global stop_threads
     global Flag
+    global name_idx
 
     while not stop_threads: 
         if download_img(current_directory,images_directory,JSON_FILENAME):
@@ -111,6 +151,7 @@ def fetching_encoding(current_directory,images_directory,JSON_FILENAME):
 
 stop_threads = False 
 Flag = False
+name_idx = [0]
 # creating  threads
 if __name__ == '__main__':
     current_directory = os.path.dirname(os.path.abspath(__file__))
@@ -123,12 +164,14 @@ if __name__ == '__main__':
         
         p1 = multiprocessing.Process(target=face_reg_runtime) 
         p2 = multiprocessing.Process(target=fetching_encoding,args=(current_directory,images_directory,JSON_FILENAME,))
+        T1 = threading.Thread(target=lcd_display)
 
         p1.start()
         p2.start()
 
         p1.join()
         p2.join()
+        T1.join()
 
     except Exception as e:
         print(f"Exception in main: {e}")
