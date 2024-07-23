@@ -33,7 +33,7 @@ def lcd_display(userId, current_directory):
         time.sleep(2)
 
         # Reinitialize the display to ensure the whole screen is cleared
-        blackImage = Image.open(os.join.path(current_directory, "image.png"))
+        blackImage = Image.open("./image.png")
         blackImage = blackImage.resize((320, 240))
         disp.lcd_ShowImage(blackImage, 0, 0)
 

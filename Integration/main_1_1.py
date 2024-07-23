@@ -55,10 +55,10 @@ def face_reg_runtime(stop_event, reload_event, client, spreadsheet_url, sheet_na
     initialize_lcd()
 
     if platform.system() == 'Windows':
-        video_capture = cv2.VideoCapture(0)                                         
+        video_capture = cv2.VideoCapture(0)
     else:
-        video_capture = cv2.VideoCapture('/dev/video4') 
-                                                    
+        video_capture = cv2.VideoCapture('/dev/video4')
+
     video_capture.set(3, 250)
     video_capture.set(4, 250)
 
@@ -67,13 +67,12 @@ def face_reg_runtime(stop_event, reload_event, client, spreadsheet_url, sheet_na
     def load_encoded_file():
         with open(os.path.join(absolute_path, "EncodedFile.p"), "rb") as file:
             encodeListKnown_withID = pkl.load(file)
-            file.close()
-            return encodeListKnown_withID
+        return encodeListKnown_withID
 
     encodeListKnown, individual_ID = load_encoded_file()
     print(individual_ID)
 
-    # Get the spreadsheet data
+    # Get the spreadsheet data once before starting the loop
     spreadsheet = client.open_by_url(spreadsheet_url)
     worksheet = spreadsheet.worksheet(sheet_name)
 
@@ -81,14 +80,14 @@ def face_reg_runtime(stop_event, reload_event, client, spreadsheet_url, sheet_na
         ret, frame = video_capture.read()
         if cv2.waitKey(1) & 0xFF == ord('q'):
             stop_event.set()
-            video_capture.release() 
+            video_capture.release()
             cv2.destroyAllWindows()
             break
 
         frame_count += 1
         
         if frame_count % 20 == 0:
-            imgS = cv2.resize(frame, (0,0), None, 0.25, 0.25)
+            imgS = cv2.resize(frame, (0, 0), None, 0.25, 0.25)
             imgS = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
             faceCurFrame = face_recognition.face_locations(imgS)
@@ -102,40 +101,34 @@ def face_reg_runtime(stop_event, reload_event, client, spreadsheet_url, sheet_na
                 if matches[matchIndex]:
                     userID = individual_ID[matchIndex]
                     print(userID)
-                    
+
                     # Call the lcd_display function to update the display
                     lcd_display(userID)
-                    
-                    data = worksheet.get_all_records()
+
                     detected_name = userID.split('_')[0].replace('-', ' ')  # Convert hyphens back to spaces
                     detected_timestamp_id = '_'.join(userID.split('_')[1:])
 
                     # Check the spreadsheet for matching name and timestamp_id
+                    data = worksheet.get_all_records()  # Consider optimizing this if data doesn't change often
+
                     for index, row in enumerate(data, start=2):  # start=2 because row 1 is headers
-                        if row['Name'] == detected_name:
-                            timestamp_id_data = f"{row['timestamp_id']}"
-                            detected_timestamp_id = f"{detected_timestamp_id}"
+                        if row['Name'] == detected_name and row['timestamp_id'] == detected_timestamp_id:
+                            name = row['Name']
+                            timestamp_id = row['timestamp_id']
+                            current_status = row['Status']
+                            current_location = row['Location_coordinate']
 
-                            if timestamp_id_data == detected_timestamp_id:
-                                name = row['Name']
-                                timestamp_id = row['timestamp_id']
-                                current_status = row['Status']
-                                current_location = row['Location_coordinate']
+                            if current_status == "" or current_status is None:
+                                location_coord = get_location()
+                                print(f"Location for {name} (timestamp_id: {timestamp_id}): {location_coord}")
 
-                                if current_status == "" or current_status is None:
-                                    location_coord = get_location()
-                                    print(f"Location for {name} (timestamp_id: {timestamp_id}): {location_coord}")
-
-                                    threading.Thread(target=update_location_in_sheet, args=(index, location_coord, client, spreadsheet_url, sheet_name)).start()
-                                else:
-                                    print(f"Our records indicate this visitor has {current_status} previously. Their last recorded location was at {current_location}.")
-                                break
+                                # Start the thread to update location in the sheet
+                                threading.Thread(target=update_location_in_sheet, args=(index, location_coord, client, spreadsheet_url, sheet_name)).start()
                             else:
-                                print(f"{detected_name} is not found in database. Please register again.")
-                                break
-                        else:
-                            print(f"{detected_name} is not found in database. Please register again.")
+                                print(f"Our records indicate this visitor has {current_status} previously. Their last recorded location was at {current_location}.")
                             break
+                    else:
+                        print(f"{detected_name} is not found in database. Please register again.")
 
         cv2.imshow("Face video_capture", frame)
 
@@ -143,6 +136,7 @@ def face_reg_runtime(stop_event, reload_event, client, spreadsheet_url, sheet_na
             encodeListKnown, individual_ID = load_encoded_file()
             print("Reloaded:", individual_ID)
             reload_event.clear()
+
 
 
 def fetching_encoding(current_directory, images_directory, JSON_FILENAME, stop_event, reload_event):
