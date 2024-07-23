@@ -175,10 +175,12 @@ def download_img(current_directory,images_directory,JSON_FILENAME):
 
         # Get the index of the "Location_coordinate" column, create it if it doesn't exist
         headers = worksheet.row_values(1)
+        global guest_profile_picture
+        guest_profile_picture = 'Guest Profile Picture (If your image is not in the 4:3 ratio, please crop or resize it before uploading)'
         for index, item in enumerate(data, start=2):
-            if 'Name' in item and 'Guest_Profile_Picture' in item and 'Timestamp' in item:
+            if 'Name' in item and guest_profile_picture in item and 'Timestamp' in item:
                 name = item['Name']
-                image_url = item['Guest_Profile_Picture']
+                image_url = item[guest_profile_picture]
                 timestamp = item['Timestamp']
 
                 sanitized_name = sanitize_filename(name)
@@ -221,9 +223,9 @@ def remove_deleted_images(images_directory):
     database_file_names = set()
 
     for index, item in enumerate(data, start=2):
-        if 'Name' in item and 'Guest_Profile_Picture' in item and 'Timestamp' in item:
+        if 'Name' in item and guest_profile_picture in item and 'Timestamp' in item:
             name = item['Name']
-            image_url = item['Guest_Profile_Picture']
+            image_url = item[guest_profile_picture]
             timestamp = item['Timestamp']
 
             sanitized_name = sanitize_filename(name)
