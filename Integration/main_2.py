@@ -133,19 +133,19 @@ def fetching_encoding(current_directory,images_directory,JSON_FILENAME,P_event):
     while not stop_threads: 
         if download_img(current_directory,images_directory,JSON_FILENAME):
             Flag = True
-            #P_event.set()
+            P_event.set()
             encoded_file = os.path.join(current_directory, "EncodedFile.p")
             #os.remove(encoded_file)
             img_encoder()
-            P_event.set()
+            P_event.clear()
             Flag = False
         if remove_deleted_images(current_directory,images_directory,JSON_FILENAME):
             Flag = True
-            #P_event.set()
+            P_event.set()
             encoded_file = os.path.join(current_directory, "EncodedFile.p")
             #os.remove(encoded_file)
             img_encoder()
-            P_event.set()
+            P_event.clear()
             Flag = False
         time.sleep(10)
     return
