@@ -2,21 +2,14 @@ import cv2
 import face_recognition
 import pickle as pkl
 import os
-import os
-import time
 import re
 import requests
-from datetime import datetime
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from Gtrans_enc import img_encoder  # Assuming transmission_encodegen.py contains img_encoder function
 from PIL import Image, ImageDraw, ImageFont  # PIL library for creating placeholder images
 import traceback
-from PIL import Image
-import threading
-import sys
-import serial
-from gps_utils import GetGPSData, uart_port, CoordinatestoLocation
+import numpy as np
 
 def img_encoder(): 
     # Importing images
@@ -43,18 +36,20 @@ def img_encoder():
     # Creating the encodings
     def findEncodings(imagesList):
         encoded_list = []
-        for img in imagesList:
+        valid_individual_ID = []
+        for idx, img in enumerate(imagesList):
             img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             encodings = face_recognition.face_encodings(img_rgb)
             if encodings:
                 encoded_list.append(encodings[0])
+                valid_individual_ID.append(individual_ID[idx])
             else:
-                print("No faces found in image.")
-        return encoded_list
+                print(f"No faces found in image {individual_ID[idx]}")
+        return encoded_list, valid_individual_ID
 
     print("Encoding Started")
-    encodeListKnown = findEncodings(imgList)
-    encodeListKnown_withID = [encodeListKnown, individual_ID]
+    encodeListKnown, valid_individual_ID = findEncodings(imgList)
+    encodeListKnown_withID = [encodeListKnown, valid_individual_ID]
     print("Encoding Complete")
 
     with open(os.path.join(absolute_path, "EncodedFile.p"), "wb") as file:
@@ -183,10 +178,8 @@ def download_img(current_directory,images_directory,JSON_FILENAME):
                     download_image_from_drive(image_url, images_directory, sanitized_name, sanitized_timestamp)
                     new_images_downloaded = True
                     
-                    # Ask for location only when new data is detected
-
                 else:
-                    print(f"Data exists: '{file_name}'")
+                    print(f"Data exists in local: '{file_name}'")
 
                 image = Image.open(file_path)
                 image = image.convert('RGB')
