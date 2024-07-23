@@ -116,7 +116,8 @@ def face_reg_runtime(stop_event, reload_event, client, spreadsheet_url, sheet_na
                             name = row['Name']
                             timestamp_id = row['timestamp_id']
                             current_status = row['Status']
-                            current_location = row['Location_coordinate']
+                            current_coordinates = row['Location_coordinate']
+                            current_location = row['Location']
 
                             if current_status == "" or current_status is None:
                                 latitude, longitude, location = get_location()
@@ -125,7 +126,7 @@ def face_reg_runtime(stop_event, reload_event, client, spreadsheet_url, sheet_na
 
                                 threading.Thread(target=update_location_in_sheet, args=(index, location_coord, location, client, spreadsheet_url, sheet_name)).start()
                             else:
-                                print(f"Our records indicate this visitor has {current_status} previously. Their last recorded location was at {current_location}, ({location}).")
+                                print(f"Our records indicate this visitor has {current_status} previously. Their last recorded location was at {current_coordinates}, ({current_location}).")
                             break
                         else:
                             print(f"{detected_name} is not found in database. Please register again.")

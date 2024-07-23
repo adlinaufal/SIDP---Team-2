@@ -147,7 +147,7 @@ def download_img(current_directory,images_directory,JSON_FILENAME):
         data = worksheet.get_all_records()
         row_count = len(data)
         print("--------------------------------------------------")
-        print("Available data on Data Base ",row_count)
+        print("Available data on Data Base:",row_count)
 
         current_file_names = set()
         new_images_downloaded = False
@@ -184,7 +184,7 @@ def download_img(current_directory,images_directory,JSON_FILENAME):
             else:
                 print("Missing 'Name', 'Guest_Profile_Picture', or 'Timestamp' field in record.")
                 continue
-            
+
         print("--------------------------------------------------")
 
         if new_images_downloaded:
