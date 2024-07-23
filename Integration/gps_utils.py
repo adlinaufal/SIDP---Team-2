@@ -1,4 +1,5 @@
 import time
+import serial
 
 GPGSA_dict = {
     "msg_id": 0,
@@ -88,6 +89,19 @@ def GetGPSData(gps):
     
     return latitude, longitude
 
+def read_gps_data_from_file(filename='gps_data.txt'):
+    try:
+        with open(filename, 'r') as file:
+            lines = file.readlines()
+            latitude_line = lines[0].strip()
+            longitude_line = lines[1].strip()
+            latitude = float(latitude_line.split(': ')[1])
+            longitude = float(longitude_line.split(': ')[1])
+            return latitude, longitude
+    except (FileNotFoundError, IndexError, ValueError) as e:
+        print(f"Error reading GPS data from file: {e}")
+        return None, None
+        
 def CoordinatestoLocation(latitude, longitude):
     location = None
     if 4.385422 < latitude < 4.385959 and 100.979104 < longitude < 100.979822:
