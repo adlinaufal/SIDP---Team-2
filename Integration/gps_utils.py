@@ -51,7 +51,7 @@ def GetGPSData(gps):
             time.sleep(1)
     
     if NumberofRetries == RetriesLimit:
-        return 4.382462, 100.968246
+        return None, None
     
     msg_list = msg_str.split(",")
 
