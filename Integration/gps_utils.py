@@ -49,7 +49,6 @@ def GetGPSData(gps):
             if msg_str:
                 break
         except Exception as e:
-            print(f"Error reading GPS data: {e}")
             NumberofRetries += 1
             time.sleep(1)
     else:
