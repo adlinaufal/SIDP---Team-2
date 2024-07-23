@@ -12,45 +12,39 @@ import traceback
 import numpy as np
 
 def img_encoder(): 
-    # Importing images
     absolute_path = os.path.dirname(__file__)
     relative_path = "images"
     folderPath = os.path.join(absolute_path, relative_path)
     PathList = os.listdir(folderPath)
 
-    imgList = []
+    encodeListKnown = []
     individual_ID = []
 
+    print("Encoding Started")
     for path in PathList:
-        img = cv2.imread(os.path.join(folderPath, path))
+        img_path = os.path.join(folderPath, path)
+        img = cv2.imread(img_path)
         if img is not None:
-            # Resize image to a consistent aspect ratio, e.g., 640x480
-            target_width = 640
-            target_height = 480
-            img = resize_image(img, target_width, target_height)
-            imgList.append(img)
-            individual_ID.append(path[:-4])
+            # Resize image to a smaller size for faster processing
+            img = cv2.resize(img, (0, 0), fx=0.25, fy=0.25)
+            img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            
+            # Try to find face locations first
+            face_locations = face_recognition.face_locations(img_rgb, model="hog")
+            
+            if face_locations:
+                # If face found, compute encoding
+                face_encoding = face_recognition.face_encodings(img_rgb, face_locations)[0]
+                encodeListKnown.append(face_encoding)
+                individual_ID.append(path[:-4])
+            else:
+                print(f"No faces found in image {path}")
         else:
             print(f"Warning: Unable to read image '{path}'.")
 
-    # Creating the encodings
-    def findEncodings(imagesList):
-        encoded_list = []
-        valid_individual_ID = []
-        for idx, img in enumerate(imagesList):
-            img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-            encodings = face_recognition.face_encodings(img_rgb)
-            if encodings:
-                encoded_list.append(encodings[0])
-                valid_individual_ID.append(individual_ID[idx])
-            else:
-                print(f"No faces found in image {individual_ID[idx]}")
-        return encoded_list, valid_individual_ID
-
-    print("Encoding Started")
-    encodeListKnown, valid_individual_ID = findEncodings(imgList)
-    encodeListKnown_withID = [encodeListKnown, valid_individual_ID]
     print("Encoding Complete")
+
+    encodeListKnown_withID = [encodeListKnown, individual_ID]
 
     with open(os.path.join(absolute_path, "EncodedFile.p"), "wb") as file:
         pkl.dump(encodeListKnown_withID, file)
