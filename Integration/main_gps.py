@@ -17,16 +17,21 @@ def read_gps_data_from_file(filename='gps_data.txt'):
 
 def main():
     gps = serial.Serial(uart_port, baudrate=9600, timeout=0.5)
-
-    latitude, longitude = GetGPSData(gps)
+    while True:
+        latitude, longitude = GetGPSData(gps)
         
-    if latitude is None or longitude is None:
-        latitude, longitude = read_gps_data_from_file()
+        # Check if GPS data is available
+        if latitude is None or longitude is None:
+            # Read from the file if GPS data is not available
+            latitude, longitude = read_gps_data_from_file()
+            if latitude is None or longitude is None:
+                print("Unable to retrieve GPS data and no valid data found in file.")
+                continue
 
-    location = CoordinatestoLocation(latitude, longitude)
-    print("\nLocation: ", location)
-    print("Coordinates: {:.6f}, {:.6f}".format(latitude, longitude))
-
+        location = CoordinatestoLocation(latitude, longitude)
+        print("\nLocation: ", location)
+        print("Coordinates: {:.6f}, {:.6f}".format(latitude, longitude))
+        break
 
 if __name__ == "__main__":
     sys.exit(main())
