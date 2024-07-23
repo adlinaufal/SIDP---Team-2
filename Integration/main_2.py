@@ -135,7 +135,7 @@ def fetching_encoding(current_directory,images_directory,JSON_FILENAME,P_event):
             Flag = True
             P_event.set()
             encoded_file = os.path.join(current_directory, "EncodedFile.p")
-            os.remove(encoded_file)
+            #os.remove(encoded_file)
             img_encoder()
             P_event.set()
             Flag = False
@@ -143,7 +143,7 @@ def fetching_encoding(current_directory,images_directory,JSON_FILENAME,P_event):
             Flag = True
             P_event.set()
             encoded_file = os.path.join(current_directory, "EncodedFile.p")
-            os.remove(encoded_file)
+            #os.remove(encoded_file)
             img_encoder()
             P_event.set()
             Flag = False
