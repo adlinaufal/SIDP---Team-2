@@ -1,4 +1,5 @@
 import multiprocessing
+import threading
 import time
 import cv2
 import os
@@ -27,7 +28,7 @@ def get_location():
             #longitude = f"{longitude:.6f}"
             #return f"{latitude:.6f}, {longitude:.6f}"
     return "4.382456, 119.123123"
-        
+
 # Function to update the location coordinates in Google Sheets
 def update_location_in_sheet(row_number, location_coord, client, spreadsheet_url, sheet_name):
     try:
@@ -35,14 +36,17 @@ def update_location_in_sheet(row_number, location_coord, client, spreadsheet_url
         print(f"Location coordinate: {location_coord}")
         spreadsheet = client.open_by_url(spreadsheet_url)
         worksheet = spreadsheet.worksheet(sheet_name)
+        start_time = time.time()
         worksheet.update_cell(row_number, worksheet.find('Location_coordinate').col, location_coord)
         worksheet.update_cell(row_number, worksheet.find('Status').col, "Checked-in")
+        end_time = time.time()
         print(f"Updated location in row {row_number}: {location_coord}")
+        print(f"Time taken to update location: {end_time - start_time} seconds")
         return True
     except Exception as e:
         print("An error occurred while updating the location:", e)
         return False
-    
+
 # Function to run facial recognition
 def face_reg_runtime(stop_event, reload_event, client, spreadsheet_url, sheet_name):
     frame_count = 0
@@ -119,15 +123,13 @@ def face_reg_runtime(stop_event, reload_event, client, spreadsheet_url, sheet_na
                                     location_coord = get_location()
                                     print(f"Location for {name} (timestamp_id: {timestamp_id}): {location_coord}")
 
-                                    if not update_location_in_sheet(index, location_coord, client, spreadsheet_url, sheet_name):
-                                        print(f"Failed to update location for {name} with timestamp_id {timestamp_id}")
+                                    threading.Thread(target=update_location_in_sheet, args=(index, location_coord, client, spreadsheet_url, sheet_name)).start()
                                 else:
                                     print(f"Our records indicate this visitor has {current_status} previously. Their last recorded location was at {current_location}.")
                                 break
                             else:
                                 print(f"{detected_name} is not found in database. Please register again.")
                                 break
-                            
                         else:
                             print(f"{detected_name} is not found in database. Please register again.")
                             break
