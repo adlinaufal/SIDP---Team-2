@@ -28,7 +28,6 @@ def img_encoder():  # [DONE]
 
     for path in PathList:
         img = cv2.imread(os.path.join(folderPath, path))
-        img = adjust_image_ratio(img)
         imgList.append(img)
         individual_ID.append(path[:-4])
         # print(individual_ID)
@@ -104,25 +103,10 @@ def create_placeholder_image(filepath):
 def sanitize_filename(name):
     return re.sub(r'[/\\: ]', '_', name)
 
-def adjust_image_ratio(img):
-    height, width, _ = img.shape
-    new_width = max(width, (4 * height) // 3)
-    new_height = max(height, (3 * width) // 4)
-
-    if (new_width / 4) * 3 > new_height:
-        new_height = int((new_width / 4) * 3)
-    else:
-        new_width = int((new_height / 3) * 4)
-
-    result = Image.new("RGB", (new_width, new_height), (0, 0, 0))
-    img_pil = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
-    result.paste(img_pil, ((new_width - width) // 2, (new_height - height) // 2))
-    return cv2.cvtColor(np.array(result), cv2.COLOR_RGB2BGR)
-
 def download_img(current_directory, images_directory, JSON_FILENAME):
     try:
-        SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1bqCo5PmQVNV7ix_kQarfSCTYC72P1c-qvrmTcu_Xb4E/edit?usp=sharing'
-        SHEET_NAME = 'Form Responses 1'
+        SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1bqCo5PmQVNV7ix_kQarfSCTYC72P1c-qvrmTcu_Xb4E/edit?usp=sharing'  # Your Google Spreadsheet URL
+        SHEET_NAME = 'Form Responses 1'  # Name of the specific sheet within your Google Spreadsheet
 
         SERVICE_ACCOUNT_FILE = os.path.join(current_directory, JSON_FILENAME + '.json')
 
@@ -160,12 +144,27 @@ def download_img(current_directory, images_directory, JSON_FILENAME):
                 if not os.path.exists(file_path):
                     download_image_from_drive(image_url, images_directory, sanitized_name, sanitized_timestamp)
                     new_images_downloaded = True
+
                 else:
                     print(f"Data exists: '{file_name}'")
 
+                # Adding padding to make the image 4:3 aspect ratio
                 image = Image.open(file_path)
                 image = image.convert('RGB')
-                new_image = adjust_image_ratio(image)
+                orig_width, orig_height = image.size
+
+                target_ratio = 4 / 3
+                current_ratio = orig_width / orig_height
+
+                if current_ratio > target_ratio:
+                    new_width = orig_width
+                    new_height = int(orig_width / target_ratio)
+                else:
+                    new_width = int(orig_height * target_ratio)
+                    new_height = orig_height
+
+                new_image = Image.new('RGB', (new_width, new_height), (255, 255, 255))
+                new_image.paste(image, ((new_width - orig_width) // 2, (new_height - orig_height) // 2))
                 new_image.save(file_path)
 
             else:
@@ -179,6 +178,7 @@ def download_img(current_directory, images_directory, JSON_FILENAME):
         print("Process interrupted by user.")
     except Exception as e:
         print("An error occurred:", e)
+
 
 def remove_deleted_images(current_directory, images_directory, JSON_FILENAME):
     SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1bqCo5PmQVNV7ix_kQarfSCTYC72P1c-qvrmTcu_Xb4E/edit?usp=sharing'
