@@ -137,7 +137,7 @@ def fetching_encoding(current_directory,images_directory,JSON_FILENAME,P_event):
             encoded_file = os.path.join(current_directory, "EncodedFile.p")
             os.remove(encoded_file)
             img_encoder()
-            P_event.clear()
+            P_event.set()
             Flag = False
         if remove_deleted_images(current_directory,images_directory,JSON_FILENAME):
             Flag = True
@@ -145,7 +145,7 @@ def fetching_encoding(current_directory,images_directory,JSON_FILENAME,P_event):
             encoded_file = os.path.join(current_directory, "EncodedFile.p")
             os.remove(encoded_file)
             img_encoder()
-            P_event.clear()
+            P_event.set()
             Flag = False
         time.sleep(10)
     return
