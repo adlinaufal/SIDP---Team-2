@@ -25,9 +25,6 @@ def img_encoder():
         img_path = os.path.join(folderPath, path)
         img = cv2.imread(img_path)
         if img is not None:
-            # Resize image to a smaller size for faster processing
-            img = cv2.resize(img, (0, 0), fx=0.25, fy=0.25)
-            img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             
             # Try to find face locations first
             face_locations = face_recognition.face_locations(img_rgb, model="hog")
@@ -49,30 +46,6 @@ def img_encoder():
     with open(os.path.join(absolute_path, "EncodedFile.p"), "wb") as file:
         pkl.dump(encodeListKnown_withID, file)
     print("File Saved")
-
-def resize_image(image, target_width, target_height):
-    h, w = image.shape[:2]
-    aspect_ratio = w / h
-    if aspect_ratio > 1:  # Landscape or square image
-        new_width = target_width
-        new_height = int(target_width / aspect_ratio)
-    else:  # Portrait image
-        new_width = int(target_height * aspect_ratio)
-        new_height = target_height
-    
-    # Ensure new dimensions are within the target size
-    new_width = min(new_width, target_width)
-    new_height = min(new_height, target_height)
-    
-    resized_img = cv2.resize(image, (new_width, new_height))
-    
-    # Create a new image with target size and place the resized image in the center
-    new_image = 255 * np.ones((target_height, target_width, 3), dtype=np.uint8)
-    x_offset = (target_width - new_width) // 2
-    y_offset = (target_height - new_height) // 2
-    new_image[y_offset:y_offset + new_height, x_offset:x_offset + new_width] = resized_img
-
-    return new_image
 
 def create_img_file(): #[DONE]
     current_directory = os.path.dirname(os.path.abspath(__file__))
