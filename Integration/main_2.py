@@ -94,7 +94,7 @@ def face_reg_runtime():
             cv2.imshow("Face video_capture", frame)
 
         else:
-            while Flag:
+            while Flag == True:
                 #cv2.imshow("Face video_capture", frame)
                 print("Encoding...")
             encodeListKnown, individual_ID = load_encoded_file()
