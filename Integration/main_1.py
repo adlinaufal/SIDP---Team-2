@@ -12,7 +12,7 @@ import numpy as np
 from gps_utils import GetGPSData, uart_port
 import platform
 from __funct_2 import img_encoder, download_img, remove_deleted_images
-from lcd_utils import lcd_display
+from lcd_utils import lcd_display, initialize_lcd
 import gspread
 import serial
 
@@ -50,6 +50,9 @@ def update_location_in_sheet(row_number, location_coord, client, spreadsheet_url
 # Function to run facial recognition
 def face_reg_runtime(stop_event, reload_event, client, spreadsheet_url, sheet_name):
     frame_count = 0
+
+    # Initialize the LCD display once
+    initialize_lcd()
 
     if platform.system() == 'Windows':
         video_capture = cv2.VideoCapture(0)                                         
@@ -99,11 +102,11 @@ def face_reg_runtime(stop_event, reload_event, client, spreadsheet_url, sheet_na
                 if matches[matchIndex]:
                     userID = individual_ID[matchIndex]
                     print(userID)
+                    
+                    # Call the lcd_display function to update the display
                     lcd_display(userID)
                     
                     data = worksheet.get_all_records()
-                    userID = individual_ID[matchIndex]
-
                     detected_name = userID.split('_')[0].replace('-', ' ')  # Convert hyphens back to spaces
                     detected_timestamp_id = '_'.join(userID.split('_')[1:])
 
@@ -140,6 +143,7 @@ def face_reg_runtime(stop_event, reload_event, client, spreadsheet_url, sheet_na
             encodeListKnown, individual_ID = load_encoded_file()
             print("Reloaded:", individual_ID)
             reload_event.clear()
+
 
 def fetching_encoding(current_directory, images_directory, JSON_FILENAME, stop_event, reload_event):
     while not stop_event.is_set(): 

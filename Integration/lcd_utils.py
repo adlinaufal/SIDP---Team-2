@@ -1,20 +1,26 @@
 import os
-import sys
 import time
 from PIL import Image
-
-sys.path.append("..")
-
 import LCD2inch4_lib
 
 WHITE = 0xFF
 BLACK = 0x00
 
-def lcd_display(userId):
-    SPI_DEVICE = "/dev/spidev1.0"
+# Create a global instance for the LCD display
+disp = None
 
-    disp = LCD2inch4_lib.LCD_2inch4(11, 40, SPI_DEVICE)
-    disp.lcd_init_2inch4()
+def initialize_lcd():
+    global disp
+    if disp is None:
+        SPI_DEVICE = "/dev/spidev1.0"
+        disp = LCD2inch4_lib.LCD_2inch4(11, 40, SPI_DEVICE)
+        disp.lcd_init_2inch4()
+    return disp
+
+def lcd_display(userId):
+    global disp
+    if disp is None:
+        initialize_lcd()
 
     # Retrieve the image
     image_path = os.path.join("images", f"{userId}.jpg")
@@ -25,7 +31,6 @@ def lcd_display(userId):
     disp.lcd_ShowImage(image, 0, 0)
     time.sleep(2)
 
-    # Clear the display
+    # Reinitialize the display to ensure the whole screen is cleared
     disp.lcd_init_2inch4()
     disp.lcd_clear(BLACK)
-
