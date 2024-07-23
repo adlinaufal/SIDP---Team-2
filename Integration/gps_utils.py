@@ -53,7 +53,7 @@ def GetGPSData(gps):
             time.sleep(1)
     else:
         print("An error occurred while reading GPS data:")
-        print("Returning last value of GPS data\n")
+        print("Returning last value of GPS data")
         return read_gps_data_from_file()
 
     # Split the message into components
@@ -67,7 +67,7 @@ def GetGPSData(gps):
         print()
         if msg_list[GPGSA_dict['mode2']] == "1":
             print("!!!!!!GPS Device is not ONLINE!!!!!!\n")
-            print("Returning last value of GPS data\n")
+            print("Returning last value of GPS data")
             return read_gps_data_from_file()
 
     if msg_list[GPGGA_dict['msg_id']] == "$GPGGA":
@@ -94,8 +94,8 @@ def GetGPSData(gps):
                     file.write(f"Latitude: {latitude}\nLongitude: {longitude}\n")
 
             except:
-                print("An error occured")
-                print("Returning last value of GPS data\n")
+                print("An error occured while reading GPS data")
+                print("Returning last value of GPS data")
 
                 return read_gps_data_from_file()
     
