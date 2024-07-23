@@ -13,6 +13,20 @@ from PIL import Image, ImageDraw, ImageFont  # PIL library for creating placehol
 
 import numpy as np
 
+
+def fail_encoding(path, e):
+    print(e, path)
+
+    name, timestamp_id = path[:-4].split('_')
+
+    name = name.replace('-', ' ')
+    data = worksheet.get_all_values()
+
+    for index, row in enumerate(data, start=2):
+        if row['Name'] == name and str(row['timestamp_id']) == timestamp_id:
+            worksheet.update_cell(index, worksheet.find('Image_Encoding_Status').col, "Failed")
+            break
+
 def img_encoder(): 
     absolute_path = os.path.dirname(__file__)
     relative_path = "images"
@@ -21,7 +35,7 @@ def img_encoder():
 
     encodeListKnown = []
     individual_ID = []
-
+    print("--------------------------------------------------")
     print("Encoding Started")
     for path in PathList:
         img_path = os.path.join(folderPath, path)
@@ -39,9 +53,11 @@ def img_encoder():
                 encodeListKnown.append(face_encoding)
                 individual_ID.append(path[:-4])
             else:
-                print(f"No faces found in image {path}")
+                e = (f"No faces found in image {path}")
+                fail_encoding(path, e)
         else:
-            print(f"Warning: Unable to read image '{path}'.")
+            e = (f"Warning: Unable to read image '{path}'.")
+            fail_encoding(path, e)
 
     print("Encoding Complete")
 
@@ -50,6 +66,7 @@ def img_encoder():
     with open(os.path.join(absolute_path, "EncodedFile.p"), "wb") as file:
         pkl.dump(encodeListKnown_withID, file)
     print("File Saved")
+    print("--------------------------------------------------")
 
 def resize_image(image, target_width, target_height):
     h, w = image.shape[:2]
@@ -129,6 +146,8 @@ def sanitize_filename(name):
     return re.sub(r'[/\\:*?"<>|]', '', name)
 
 def download_img(current_directory,images_directory,JSON_FILENAME):
+    global worksheet
+
     try:
         SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1bqCo5PmQVNV7ix_kQarfSCTYC72P1c-qvrmTcu_Xb4E/edit?usp=sharing'  # Your Google Spreadsheet URL
         SHEET_NAME = 'Form Responses 1'  # Name of the specific sheet within your Google Spreadsheet
@@ -156,13 +175,10 @@ def download_img(current_directory,images_directory,JSON_FILENAME):
 
         # Get the index of the "Location_coordinate" column, create it if it doesn't exist
         headers = worksheet.row_values(1)
-        global guest_profile_picture
-        guest_profile_picture = 'Guest Profile Picture (If your image is not in the 4:3 ratio, please crop or resize it before uploading)'
-
         for index, item in enumerate(data, start=2):
-            if 'Name' in item and guest_profile_picture in item and 'Timestamp' in item:
+            if 'Name' in item and 'Guest_Profile_Picture' in item and 'Timestamp' in item:
                 name = item['Name']
-                image_url = item[guest_profile_picture]
+                image_url = item['Guest_Profile_Picture']
                 timestamp = item['Timestamp']
 
                 sanitized_name = sanitize_filename(name)
@@ -200,26 +216,14 @@ def download_img(current_directory,images_directory,JSON_FILENAME):
     except Exception as e:
         print("An error occurred:", e)
 
-def remove_deleted_images(current_directory,images_directory,JSON_FILENAME):
-    SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1bqCo5PmQVNV7ix_kQarfSCTYC72P1c-qvrmTcu_Xb4E/edit?usp=sharing'  # Your Google Spreadsheet URL
-    SHEET_NAME = 'Form Responses 1'  # Name of the specific sheet within your Google Spreadsheet
-
-    JSON_FILENAME = "sidp-facialrecognition-21f79db4b512"
-    SERVICE_ACCOUNT_FILE = os.path.join(current_directory, JSON_FILENAME+'.json')
-
-    scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
-    creds = ServiceAccountCredentials.from_json_keyfile_name(SERVICE_ACCOUNT_FILE, scope)
-    client = gspread.authorize(creds)
-
-    spreadsheet = client.open_by_url(SPREADSHEET_URL)
-    worksheet = spreadsheet.worksheet(SHEET_NAME)
+def remove_deleted_images(images_directory):
     data = worksheet.get_all_records()
     database_file_names = set()
-    
+
     for index, item in enumerate(data, start=2):
-        if 'Name' in item and guest_profile_picture in item and 'Timestamp' in item:
+        if 'Name' in item and 'Guest_Profile_Picture' in item and 'Timestamp' in item:
             name = item['Name']
-            image_url = item[guest_profile_picture]
+            image_url = item['Guest_Profile_Picture']
             timestamp = item['Timestamp']
 
             sanitized_name = sanitize_filename(name)
