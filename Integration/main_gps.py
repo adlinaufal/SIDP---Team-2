@@ -1,18 +1,17 @@
 import sys
 import serial
-from gps_utils import GetGPSData, uart_port, CoordinatestoLocation, read_gps_data_from_file
+
+from gps_utils import GetGPSData, uart_port, CoordinatestoLocation
 
 def main():
-    count = 0
-    while count < 10:
-        gps = serial.Serial(uart_port, baudrate=9600, timeout=0.5)
+    gps = serial.Serial(uart_port, baudrate=9600, timeout=0.5)
+    while True:
         latitude, longitude = GetGPSData(gps)
         if latitude is not None and longitude is not None:
-            return latitude, longitude
-        count += 1
-    
-    if latitude is None and longitude is None:
-        latitude, longitude = read_gps_data_from_file()
-    
-    return latitude, longitude
+            location = CoordinatestoLocation(latitude, longitude)
+            print("\nLocation: ", location)
+            print("Coordinates: {:.6f}, {:.6f}".format(latitude, longitude))
+            break
 
+if __name__ == "__main__":
+    sys.exit(main())

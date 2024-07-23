@@ -52,7 +52,8 @@ def GetGPSData(gps):
             time.sleep(1)
     
     if NumberofRetries == RetriesLimit:
-        return None, None
+        latitude, longitude = read_gps_data_from_file()
+        return latitude, longitude
     
     msg_list = msg_str.split(",")
 
@@ -63,7 +64,8 @@ def GetGPSData(gps):
         print()
         if msg_list[GPGSA_dict['mode2']] == "1":
             print("!!!!!!GPS Device is not ONLINE!!!!!!")
-            return None, None
+            latitude, longitude = read_gps_data_from_file()
+            return latitude, longitude
 
     if msg_list[GPGGA_dict['msg_id']] == "$GPGGA":
         lat_str = msg_list[GPGGA_dict["latitude"]]
