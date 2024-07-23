@@ -22,15 +22,19 @@ def lcd_display(userId):
     if disp is None:
         initialize_lcd()
 
-    # Retrieve the image
-    image_path = os.path.join("images", f"{userId}.jpg")
+    try: 
+        # Retrieve the image
+        image_path = os.path.join("images", f"{userId}.jpg")
 
-    # Display the obtained image
-    image = Image.open(image_path)
-    image = image.resize((320, 240))
-    disp.lcd_ShowImage(image, 0, 0)
-    time.sleep(2)
+        # Display the obtained image
+        image = Image.open(image_path)
+        image = image.resize((320, 240))
+        disp.lcd_ShowImage(image, 0, 0)
+        time.sleep(2)
 
-    # Reinitialize the display to ensure the whole screen is cleared
-    disp.lcd_init_2inch4()
-    disp.lcd_clear(BLACK)
+        # Reinitialize the display to ensure the whole screen is cleared
+        disp.lcd_init_2inch4()
+        disp.lcd_clear(BLACK)
+
+    except:
+        pass
