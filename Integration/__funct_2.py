@@ -7,86 +7,32 @@ import requests
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from Gtrans_enc import img_encoder  # Assuming transmission_encodegen.py contains img_encoder function
-from PIL import Image, ImageDraw, ImageFont, ExifTags  # PIL library for creating placeholder images
+from PIL import Image, ImageDraw, ImageFont  # PIL library for creating placeholder images
 import traceback
-import numpy as np
 
-def correct_image_orientation(image_path):
-    try:
-        image = Image.open(image_path)
-        for orientation in ExifTags.TAGS.keys():
-            if ExifTags.TAGS[orientation] == 'Orientation':
-                break
-
-        exif = image._getexif()
-        if exif is not None:
-            orientation = exif.get(orientation)
-            if orientation == 3:
-                image = image.rotate(180, expand=True)
-            elif orientation == 6:
-                image = image.rotate(270, expand=True)
-            elif orientation == 8:
-                image = image.rotate(90, expand=True)
-
-        return image
-    except (AttributeError, KeyError, IndexError):
-        # Cases: image doesn't have getexif
-        return Image.open(image_path)
-
-def add_padding_to_aspect_ratio(image, target_aspect_ratio=(4, 3)):
-    target_ratio = target_aspect_ratio[0] / target_aspect_ratio[1]
-    height, width = image.shape[:2]
-    current_ratio = width / height
-
-    if current_ratio > target_ratio:
-        new_width = width
-        new_height = int(width / target_ratio)
-    else:
-        new_height = height
-        new_width = int(height * target_ratio)
-
-    delta_w = new_width - width
-    delta_h = new_height - height
-    top, bottom = delta_h // 2, delta_h - (delta_h // 2)
-    left, right = delta_w // 2, delta_w - (delta_w // 2)
-
-    color = [0, 0, 0]
-    new_image = cv2.copyMakeBorder(image, top, bottom, left, right, cv2.BORDER_CONSTANT, value=color)
-    return new_image
-
-def img_encoder():
-    # Importing images
+def img_encoder(): #[DONE]
+    #Importing images
     absolute_path = os.path.dirname(__file__)
     relative_path = "images"
     folderPath = os.path.join(absolute_path, relative_path)
     PathList = os.listdir(folderPath)
 
     imgList = []
-    individual_ID = []
+    individual_ID=[]
 
     for path in PathList:
-        image_path = os.path.join(folderPath, path)
-        # Correct the orientation of the image
-        pil_img = correct_image_orientation(image_path)
-        img = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
-        
-        # Ensure the image has a 4:3 aspect ratio by adding padding
-        img = add_padding_to_aspect_ratio(img)
-        
-        imgList.append(img)
+        imgList.append(cv2.imread(os.path.join(folderPath,path)))
         individual_ID.append(path[:-4])
+        #print(individual_ID)
 
-    # Creating the encodings
+    #Creating the encodings
     def findEncodings(imagesList):
+
         encoded_list = []
         for img in imagesList:
-            try:
-                img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-                encode = face_recognition.face_encodings(img_rgb)[0]
-                encoded_list.append(encode)
-            except IndexError:
-                print(f"No faces found in the image. Skipping: {img}")
-                continue
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            encode = face_recognition.face_encodings(img)[0]
+            encoded_list.append(encode)
 
         return encoded_list
 
@@ -95,9 +41,11 @@ def img_encoder():
     encodeListKnown_withID = [encodeListKnown, individual_ID]
     print("Encoding Complete")
 
-    with open(os.path.join(absolute_path, "EncodedFile.p"), "wb") as file:
-        pkl.dump(encodeListKnown_withID, file)
+    file = open(absolute_path + "//" "EncodedFile.p", "wb")
+    pkl.dump(encodeListKnown_withID,file)
+    file.close()
     print("File Saved")
+
 
 def create_img_file(): #[DONE]
     current_directory = os.path.dirname(os.path.abspath(__file__))
@@ -114,6 +62,26 @@ def extract_file_id(url):
     else:
         raise ValueError("File ID not found in the URL")
 
+# Function to add padding to make the image 4:3 ratio
+def add_padding_to_make_4_3(image):
+    width, height = image.size
+    target_width = 4
+    target_height = 3
+    new_width = width
+    new_height = height
+    if width / height < target_width / target_height:
+        new_width = target_height * width / height
+        new_height = target_height
+    else:
+        new_width = target_width
+        new_height = target_width * height / width
+    new_width = int(new_width)
+    new_height = int(new_height)
+
+    result = Image.new("RGB", (new_width, new_height), (255, 255, 255))
+    result.paste(image, ((new_width - width) // 2, (new_height - height) // 2))
+    return result
+
 # Function to download image from Google Drive URL and rename it
 def download_image_from_drive(url, folder_path, name, timestamp):
     try:
@@ -129,6 +97,13 @@ def download_image_from_drive(url, folder_path, name, timestamp):
             f.write(response.content)
 
         print(f"Downloaded and saved file to '{file_name}'")
+
+        # Open the downloaded image and convert to 4:3 ratio
+        image = Image.open(file_name)
+        image = image.convert('RGB')
+        image = add_padding_to_make_4_3(image)
+        image.save(file_name)
+
         return file_name
 
     except ValueError as e:
@@ -151,32 +126,29 @@ def create_placeholder_image(filepath):
 def sanitize_filename(name):
     return re.sub(r'[/\\: ]', '_', name)
 
-def download_img(current_directory,images_directory,JSON_FILENAME):
+def download_img(current_directory, images_directory, JSON_FILENAME):
     try:
         SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1bqCo5PmQVNV7ix_kQarfSCTYC72P1c-qvrmTcu_Xb4E/edit?usp=sharing'  # Your Google Spreadsheet URL
         SHEET_NAME = 'Form Responses 1'  # Name of the specific sheet within your Google Spreadsheet
 
-        #current_directory = os.path.dirname(os.path.abspath(__file__))#[done1]
         SERVICE_ACCOUNT_FILE = os.path.join(current_directory, JSON_FILENAME+'.json')
 
         scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
         creds = ServiceAccountCredentials.from_json_keyfile_name(SERVICE_ACCOUNT_FILE, scope)
         client = gspread.authorize(creds)
 
-        #images_directory = os.path.join(current_directory, 'images')#[done1]
-        if not os.path.exists(images_directory):#[done1]
-            os.makedirs(images_directory)#[done1]
+        if not os.path.exists(images_directory):
+            os.makedirs(images_directory)
 
         spreadsheet = client.open_by_url(SPREADSHEET_URL)
         worksheet = spreadsheet.worksheet(SHEET_NAME)
         data = worksheet.get_all_records()
         row_count = len(data)
-        print("Available data on Data Base ",row_count)
+        print("Available data on Data Base ", row_count)
 
         current_file_names = set()
         new_images_downloaded = False
 
-        # Get the index of the "Location_coordinate" column, create it if it doesn't exist
         headers = worksheet.row_values(1)
         for index, item in enumerate(data, start=2):
             if 'Name' in item and 'Guest_Profile_Picture' in item and 'Timestamp' in item:
@@ -189,22 +161,19 @@ def download_img(current_directory,images_directory,JSON_FILENAME):
                 file_name = f"{sanitized_name}_{sanitized_timestamp}.jpg"
                 file_path = os.path.join(images_directory, file_name)
                 current_file_names.add(file_name)
-                
-                # Update the Google Sheet with the sanitized timestamp in 'timestamp_id' column
+
                 worksheet.update_cell(index, worksheet.find('timestamp_id').col, sanitized_timestamp)
 
                 if not os.path.exists(file_path):
                     download_image_from_drive(image_url, images_directory, sanitized_name, sanitized_timestamp)
                     new_images_downloaded = True
-                    
-                    # Ask for location only when new data is detected
 
                 else:
                     print(f"Data exists: '{file_name}'")
 
                 image = Image.open(file_path)
                 image = image.convert('RGB')
-                new_image = image.resize((960,720))
+                new_image = image.resize((960, 720))
                 new_image.save(file_path)
 
             else:
@@ -219,7 +188,7 @@ def download_img(current_directory,images_directory,JSON_FILENAME):
     except Exception as e:
         print("An error occurred:", e)
 
-def remove_deleted_images(current_directory,images_directory,JSON_FILENAME):
+def remove_deleted_images(current_directory, images_directory, JSON_FILENAME):
     SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1bqCo5PmQVNV7ix_kQarfSCTYC72P1c-qvrmTcu_Xb4E/edit?usp=sharing'  # Your Google Spreadsheet URL
     SHEET_NAME = 'Form Responses 1'  # Name of the specific sheet within your Google Spreadsheet
 
@@ -253,7 +222,7 @@ def remove_deleted_images(current_directory,images_directory,JSON_FILENAME):
 
     for image_file in all_files:
         dir_file_names.add(image_file)
-        
+
     deleted_files = dir_file_names - database_file_names
     for file_name in deleted_files:
         file_path = os.path.join(images_directory, file_name)
