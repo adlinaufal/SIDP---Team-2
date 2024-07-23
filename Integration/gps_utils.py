@@ -81,6 +81,10 @@ def GetGPSData(gps):
             
             latitude = convert_to_decimal(lat_deg, lat_min, lat_dir)
             longitude = convert_to_decimal(lon_deg, lon_min, lon_dir)
+            
+            # Save the latitude and longitude to a file
+            with open('gps_data.txt', 'w') as file:
+                file.write(f"Latitude: {latitude}\nLongitude: {longitude}\n")
     
     return latitude, longitude
 
