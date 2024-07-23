@@ -38,34 +38,35 @@ def convert_to_decimal(degrees, minutes, direction):
         decimal = -decimal
     return decimal
 
-def GetGPSData(gps):    
+def GetGPSData(gps):
     NumberofRetries = 0
     RetriesLimit = 5
 
     while NumberofRetries < RetriesLimit:
         try:
             data = gps.readline()
-            msg_str = str(data, encoding="utf-8")
-            break
-        except Exception:
+            msg_str = str(data, encoding="utf-8").strip()
+            if msg_str:
+                break
+        except Exception as e:
+            print(f"Error reading GPS data: {e}")
             NumberofRetries += 1
             time.sleep(1)
-    
-    if NumberofRetries == RetriesLimit:
-        latitude, longitude = read_gps_data_from_file()
-        return latitude, longitude
-    
+    else:
+        return read_gps_data_from_file()
+
+    # Split the message into components
     msg_list = msg_str.split(",")
 
     latitude = None
     longitude = None
 
+    # Check for GPS data validity
     if msg_list[GPGSA_dict['msg_id']] == "$GPGSA":
         print()
         if msg_list[GPGSA_dict['mode2']] == "1":
-            print("!!!!!!GPS Device is not ONLINE!!!!!!")
-            latitude, longitude = read_gps_data_from_file()
-            return latitude, longitude
+            print("!!!!!!GPS Device is not ONLINE!!!!!!\n")
+            return read_gps_data_from_file()
 
     if msg_list[GPGGA_dict['msg_id']] == "$GPGGA":
         lat_str = msg_list[GPGGA_dict["latitude"]]
