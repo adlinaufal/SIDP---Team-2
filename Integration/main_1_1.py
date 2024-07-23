@@ -130,8 +130,8 @@ def face_reg_runtime(stop_event, reload_event, client, spreadsheet_url, sheet_na
                             else:
                                 print(f"Our records indicate this visitor has {current_status} previously. Their last recorded location was at {current_coordinates}, ({current_location}).")
                             break
-                        else:
-                            print(f"{detected_name} is not found in database. Please register again.")
+                    else:
+                         print(f"{detected_name} is not found in database. Please register again.")
 
                     print("--------------------------------------------------")
 
