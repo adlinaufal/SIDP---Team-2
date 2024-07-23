@@ -123,7 +123,8 @@ def create_placeholder_image(filepath):
     image.save(filepath)
 
 def sanitize_filename(name):
-    return re.sub(r'[/\\: ]', '_', name)
+    name = name.replace(' ', '-')
+    return re.sub(r'[/\\:*?"<>|]', '', name)
 
 def download_img(current_directory,images_directory,JSON_FILENAME):
     try:
