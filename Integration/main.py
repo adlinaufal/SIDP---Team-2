@@ -1,256 +1,182 @@
 import multiprocessing
+import threading
 import time
 import cv2
 import os
-import time
-import re
-import sys
-import requests
-from datetime import datetime
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
-from Gtrans_enc import img_encoder  # Assuming transmission_encodegen.py contains img_encoder function
-from PIL import Image, ImageDraw, ImageFont  # PIL library for creating placeholder images
 import traceback
-import threading
 import pickle as pkl
 import face_recognition
-import numpy as np
-import serial
 import platform
-from gps_utils import GetGPSData, uart_port, CoordinatestoLocation
+import gspread
+import serial
 
-os.system("taskset -p 0xff %d" % os.getpid())
+from oauth2client.service_account import ServiceAccountCredentials
+from __funct import img_encoder, download_img, remove_deleted_images
+from lcd_utils import lcd_display, initialize_lcd
+from gps_utils import CoordinatestoLocation, uart_port, GetGPSData
 
-def extract_file_id(url):
-    pattern = r'id=([a-zA-Z0-9-_]+)'
-    match = re.search(pattern, url)
-    if match:
-        return match.group(1)
-    else:
-        raise ValueError("File ID not found in the URL")
+import numpy as np
 
-# Function to download image from Google Drive URL and rename it
-def download_image_from_drive(url, folder_path, name, timestamp):
-    try:
-        file_id = extract_file_id(url)
-        download_url = f"https://drive.google.com/uc?id={file_id}"
-        response = requests.get(download_url)
+JSON_FILENAME = "sidp-facialrecognition-21f79db4b512"
 
-        name = name.replace(' ', '_')
-        timestamp = timestamp.replace(' ', '').replace('/', '').replace(':', '')
-
-        file_name = os.path.join(folder_path, f"{name}_{timestamp}.jpg")
-        with open(file_name, 'wb') as f:
-            f.write(response.content)
-
-        print(f"Downloaded and saved file to '{file_name}'")
-        return file_name
-
-    except ValueError as e:
-        print(f"Error: {e}")
-    except Exception as e:
-        print(f"Error downloading image from {url}: {e}")
-        print(traceback.format_exc())
-        file_name = os.path.join(folder_path, f"{name}_{timestamp}.jpg")
-        create_placeholder_image(file_name)
-        return file_name
-
-# Function to create a placeholder image
-def create_placeholder_image(filepath):
-    image = Image.new('RGB', (200, 200), color='gray')
-    draw = ImageDraw.Draw(image)
-    font = ImageFont.load_default()
-    draw.text((10, 90), "Placeholder", fill='white', font=font)
-    image.save(filepath)
-
-def sanitize_filename(name):
-    return re.sub(r'[/\\: ]', '_', name)
-
-def remove_deleted_images(current_file_names, previous_file_names, folder_path):
-    global Flag
-    deleted_files = previous_file_names - current_file_names
-    for file_name in deleted_files:
-        file_path = os.path.join(folder_path, file_name)
-        if os.path.exists(file_path):
-            os.remove(file_path)
-            print(f"Deleted file: {file_path}")
-            
-            Flag = True
-            img_encoder()
-            Flag = False
-
+# Function to get location from user input
 def get_location():
     gps = serial.Serial(uart_port, baudrate=9600, timeout=0.5)
     while True:
         latitude, longitude = GetGPSData(gps)
         if latitude is not None and longitude is not None:
             location = CoordinatestoLocation(latitude, longitude)
-            print("\nLocation: ", location)
-            print("Coordinates: {:.6f}, {:.6f}".format(latitude, longitude))
-            return f"{latitude},{longitude}"
-        else:
-            print("GPS data not available. Retrying...")
-            
-def face_reg_runtime(event):
-    global stop_threads
-    global Flag
+            break
+    
+    return latitude, longitude, location
+
+# Function to update the location coordinates in Google Sheets
+def update_location_in_sheet(row_number, location_coord, location, client, spreadsheet_url, sheet_name):
+    try:
+        print(f"Location coordinate: {location_coord}")
+        spreadsheet = client.open_by_url(spreadsheet_url)
+        worksheet = spreadsheet.worksheet(sheet_name)
+        start_time = time.time()
+        worksheet.update_cell(row_number, worksheet.find('Location_coordinate').col, location_coord)
+        worksheet.update_cell(row_number, worksheet.find('Location').col, location)
+        worksheet.update_cell(row_number, worksheet.find('Status').col, "Checked-in")
+        end_time = time.time()
+        print(f"Time taken to update location: {end_time - start_time} seconds")
+        return True
+    except Exception as e:
+        print("An error occurred while updating the location:", e)
+        return False
+
+# Function to run facial recognition
+def face_reg_runtime(stop_event, reload_event, client, spreadsheet_url, sheet_name):
     frame_count = 0
+
+    # Initialize the LCD display once
+    initialize_lcd()
+
     if platform.system() == 'Windows':
         video_capture = cv2.VideoCapture(0)
-                                                    
     else:
-        video_capture = cv2.VideoCapture('/dev/video4') #For webcam (HD Pro Webcam C920) connected to VisionFive2 board
-                                                    #'/dev/video4'
+        video_capture = cv2.VideoCapture('/dev/video4')
+
     video_capture.set(3, 250)
     video_capture.set(4, 250)
 
-    #Load Encoding file
     absolute_path = os.path.dirname(__file__)
-    with open(os.path.join(absolute_path, "EncodedFile.p"), "rb") as file:
-        encodeListKnown_withID = pkl.load(file)
-    encodeListKnown, individual_ID = encodeListKnown_withID
 
-    print(individual_ID)# to check id's loaded
+    def load_encoded_file():
+        with open(os.path.join(absolute_path, "EncodedFile.p"), "rb") as file:
+            encodeListKnown_withID = pkl.load(file)
+        return encodeListKnown_withID
 
-    while video_capture.isOpened():
+    encodeListKnown, individual_ID = load_encoded_file()
+    print(individual_ID)
 
+    # Get the spreadsheet data once before starting the loop
+    spreadsheet = client.open_by_url(spreadsheet_url)
+    worksheet = spreadsheet.worksheet(sheet_name)
+
+    while video_capture.isOpened() and not stop_event.is_set():
         ret, frame = video_capture.read()
         if cv2.waitKey(1) & 0xFF == ord('q'):
-            event.set()
-            video_capture.release() 
+            stop_event.set()
+            video_capture.release()
             cv2.destroyAllWindows()
             break
+
+        frame_count += 1
         
-        frame_count +=1
-        if not Flag:
-            if frame_count % 20 == 0:
-                
-                imgS = cv2.resize(frame, (0,0), None, 0.25, 0.25)
-                imgS = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        if frame_count % 20 == 0:
+            imgS = cv2.resize(frame, (0, 0), None, 0.25, 0.25)
+            imgS = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-                faceCurFrame = face_recognition.face_locations(imgS)
-                encodeCurFrame = face_recognition.face_encodings(imgS, faceCurFrame)
+            faceCurFrame = face_recognition.face_locations(imgS)
+            encodeCurFrame = face_recognition.face_encodings(imgS, faceCurFrame)
 
-                for encodeFace,faceLoc in zip(encodeCurFrame, faceCurFrame):
-                    matches = face_recognition.compare_faces(encodeListKnown, encodeFace)
-                    faceDis = face_recognition.face_distance(encodeListKnown, encodeFace)
+            for encodeFace, faceLoc in zip(encodeCurFrame, faceCurFrame):
+                matches = face_recognition.compare_faces(encodeListKnown, encodeFace)
+                faceDis = face_recognition.face_distance(encodeListKnown, encodeFace)
 
-                    matchIndex = np.argmin(faceDis)
-                    if matches[matchIndex]:
-                        print(individual_ID[matchIndex])
-        else:
-            continue
+                matchIndex = np.argmin(faceDis)
+                if matches[matchIndex]:
+                    print("--------------------------------------------------")
+                    userID = individual_ID[matchIndex]
+                    print(userID)
 
-        cv2.imshow("Face video_capture",frame)
+                    # Call the lcd_display function to update the display
+                    lcd_display(userID)
 
-def fetching_encoding(event):
-    print("here 1")
-    img_encoder()
-    global stop_threads
-    global Flag
-    try:
-        SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1bqCo5PmQVNV7ix_kQarfSCTYC72P1c-qvrmTcu_Xb4E/edit?usp=sharing'  # Your Google Spreadsheet URL
-        SHEET_NAME = 'Form Responses 1'  # Name of the specific sheet within your Google Spreadsheet
+                    detected_name = userID.split('_')[0].replace('-', ' ')  # Convert hyphens back to spaces
+                    detected_timestamp_id = '_'.join(userID.split('_')[1:])
 
-        current_directory = os.path.dirname(os.path.abspath(__file__))
-        JSON_FILENAME = "sidp-facialrecognition-21f79db4b512"
-        SERVICE_ACCOUNT_FILE = os.path.join(current_directory, JSON_FILENAME+'.json')
+                    # Check the spreadsheet for matching name and timestamp_id
+                    data = worksheet.get_all_records()  # Consider optimizing this if data doesn't change often
 
-        scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
-        creds = ServiceAccountCredentials.from_json_keyfile_name(SERVICE_ACCOUNT_FILE, scope)
-        client = gspread.authorize(creds)
+                    for index, row in enumerate(data, start=2):  # start=2 because row 1 is headers
+                        if row['Name'] == detected_name and str(row['timestamp_id']) == detected_timestamp_id:
+                            name = row['Name']
+                            timestamp_id = row['timestamp_id']
+                            current_status = row['Status']
+                            current_coordinates = row['Location_coordinate']
+                            current_location = row['Location']
 
-        images_directory = os.path.join(current_directory, 'images')
-        if not os.path.exists(images_directory):
-            os.makedirs(images_directory)
+                            if current_status == "" or current_status is None:
+                                latitude, longitude, location = get_location()
+                                location_coord = f"{latitude:.6f}, {longitude:.6f}"
+                                print(f"Location for {name} (timestamp_id: {timestamp_id}): {location_coord}")
 
-        previous_file_names = set()
-
-        while True:
-            if event.is_set():
-                break
-            time.sleep(10)
-            spreadsheet = client.open_by_url(SPREADSHEET_URL)
-            worksheet = spreadsheet.worksheet(SHEET_NAME)
-            data = worksheet.get_all_records()
-
-            current_file_names = set()
-            new_images_downloaded = False
-
-            # Get the index of the "Location_coordinate" column, create it if it doesn't exist
-            headers = worksheet.row_values(1)
-            if "Location_coordinate" not in headers:
-                worksheet.add_cols(1)
-                worksheet.update_cell(1, len(headers) + 1, "Location_coordinate")
-                location_col = len(headers) + 1
-            else:
-                location_col = headers.index("Location_coordinate") + 1
-
-            for index, item in enumerate(data, start=2):
-                if 'Name' in item and 'Guest_Profile_Picture' in item and 'Timestamp' in item:
-                    name = item['Name']
-                    image_url = item['Guest_Profile_Picture']
-                    timestamp = item['Timestamp']
-
-                    sanitized_name = sanitize_filename(name)
-                    sanitized_timestamp = re.sub(r'[/: ]', '', timestamp)
-                    file_name = f"{sanitized_name}_{sanitized_timestamp}.jpg"
-                    file_path = os.path.join(images_directory, file_name)
-                    current_file_names.add(file_name)
-                    # print(current_file_names)
-                    print(file_path)
-
-                    # if not os.path.exists(file_path):
-                    #     download_image_from_drive(image_url, images_directory, sanitized_name, sanitized_timestamp)
-                    #     new_images_downloaded = True
-                        
-                    #     # Ask for location only when new data is detected
-                    #     location_coord = get_location()
-
-                    #     # Update location coordinate
-                    #     worksheet.update_cell(index, location_col, location_coord)
-                    #     print(f"Updated location for {name}: {location_coord}")
-                    # else:
-                    #     print(f"Data exists: '{file_name}'")
-
-                    if not os.path.exists(file_path):
-                        download_image_from_drive(image_url, images_directory, sanitized_name, sanitized_timestamp)
-                        new_images_downloaded = True
+                                threading.Thread(target=update_location_in_sheet, args=(index, location_coord, location, client, spreadsheet_url, sheet_name)).start()
+                            else:
+                                print(f"Our records indicate this visitor has {current_status} previously. Their last recorded location was at {current_coordinates}, ({current_location}).")
+                            break
                     else:
-                        print(f"Data exists: '{file_name}'")
+                         print(f"{detected_name} is not found in database. Please register again.")
 
-                    image = Image.open(file_path)
-                    image = image.convert('RGB')
-                    new_image = image.resize((960,720))
-                    new_image.save(file_path)
+                    print("--------------------------------------------------")
 
-                else:
-                    print("Missing 'Name', 'Guest_Profile_Picture', or 'Timestamp' field in record.")
-                    continue
+        cv2.imshow("Face video_capture", frame)
 
-            remove_deleted_images(current_file_names, previous_file_names, images_directory)
-            previous_file_names = current_file_names
+        if reload_event.is_set():
+            encodeListKnown, individual_ID = load_encoded_file()
+            print("Reloaded:", individual_ID)
+            reload_event.clear()
 
-            if new_images_downloaded:
-                Flag = True
-                img_encoder()
-                Flag = False
-    except KeyboardInterrupt:
-        print("Process interrupted by user.")
-    except Exception as e:
-        print("An error occurred:", e)
-    print("here 2")
+
+
+def fetching_encoding(current_directory, images_directory, JSON_FILENAME, stop_event, reload_event):
+    while not stop_event.is_set(): 
+        if download_img(current_directory, images_directory, JSON_FILENAME) or remove_deleted_images(current_directory, images_directory, JSON_FILENAME):
+            encoded_file = os.path.join(current_directory, "EncodedFile.p")
+            os.remove(encoded_file)
+            img_encoder()
+            reload_event.set()
+        time.sleep(30)
     return
 
-stop_threads = False 
-Flag = False
-# creating  threads
 if __name__ == '__main__':
+    current_directory = os.path.dirname(os.path.abspath(__file__))
+    images_directory = os.path.join(current_directory, 'images')
+
+    SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1bqCo5PmQVNV7ix_kQarfSCTYC72P1c-qvrmTcu_Xb4E/edit?usp=sharing'
+    SHEET_NAME = 'Form Responses 1'
+
+    current_directory = os.path.dirname(os.path.abspath(__file__))
+    JSON_FILENAME = JSON_FILENAME
+    SERVICE_ACCOUNT_FILE = os.path.join(current_directory, JSON_FILENAME + '.json')
+    
+    scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
+    creds = ServiceAccountCredentials.from_json_keyfile_name(SERVICE_ACCOUNT_FILE, scope)
+    client = gspread.authorize(creds)    
+
+    stop_event = multiprocessing.Event()
+    reload_event = multiprocessing.Event()
+
     try:
-        event = multiprocessing.Event()
-        p1 = multiprocessing.Process(target=face_reg_runtime,args=(event,)) 
-        p2 = multiprocessing.Process(target=fetching_encoding,args=(event,))
+        download_img(current_directory, images_directory, JSON_FILENAME)
+        img_encoder()
+        
+        p1 = multiprocessing.Process(target=face_reg_runtime, args=(stop_event, reload_event, client, SPREADSHEET_URL, SHEET_NAME)) 
+        p2 = multiprocessing.Process(target=fetching_encoding, args=(current_directory, images_directory, JSON_FILENAME, stop_event, reload_event))
 
         p1.start()
         p2.start()
@@ -263,30 +189,3 @@ if __name__ == '__main__':
         print(traceback.format_exc())
 
     print("Program Terminated")
-
-
-"""
-PROGRESS REPORT
-Progress 1:
-    Create thread 1 which runs face_rec() function. When the function start it
-    will begin to detect the faces of individual that have been encoded in the 
-    EncodedFile.p. When q is pressed on the keyboard, the function will exit -
-    and wil stop the program. This can be use to stop the whole program execu-
-    tion.
-
-Progress 2:
-    Combined main_trans file with main.py file due to thread handling difficulties.
-    Successfully terminated the program by pressing Q on keyboard.
-
-Progress 3:
-    Successfully make the threads run together. The first problem encountered is
-    when a new registration happened and the EncodedFile.p need to be encoded again,
-    the threads will stop running due to file access conflict. The first approach is
-    to use thread management system. However, the structure of the program itself,
-    does not fit with the thread management. The successful approach is to disable
-    file reading in the face_recognition function. This allow the EncodedFile.p to
-    be able to encode again without interrupting the running threads.
-    Next task-> include GPS reading when individual face is detected.
-
-    Update: Opt to use multiprocessing as compared to threads
-"""

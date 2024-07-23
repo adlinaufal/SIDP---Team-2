@@ -146,7 +146,7 @@ def face_reg_runtime(stop_event, reload_event, client, spreadsheet_url, sheet_na
 
 def fetching_encoding(current_directory, images_directory, JSON_FILENAME, stop_event, reload_event):
     while not stop_event.is_set(): 
-        if download_img(current_directory, images_directory, JSON_FILENAME) or remove_deleted_images(current_directory, images_directory, JSON_FILENAME):
+        if download_img(current_directory, images_directory, JSON_FILENAME) or remove_deleted_images(images_directory):
             encoded_file = os.path.join(current_directory, "EncodedFile.p")
             os.remove(encoded_file)
             img_encoder()

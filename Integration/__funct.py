@@ -2,58 +2,78 @@ import cv2
 import face_recognition
 import pickle as pkl
 import os
-import os
-import time
 import re
 import requests
-from datetime import datetime
 import gspread
+import traceback
+
 from oauth2client.service_account import ServiceAccountCredentials
 from Gtrans_enc import img_encoder  # Assuming transmission_encodegen.py contains img_encoder function
 from PIL import Image, ImageDraw, ImageFont  # PIL library for creating placeholder images
-import traceback
-from PIL import Image
-import threading
-import sys
-import serial
-from gps_utils import GetGPSData, uart_port, CoordinatestoLocation
 
-def img_encoder(): #[DONE]
-    #Importing images
+import numpy as np
+
+def img_encoder(): 
     absolute_path = os.path.dirname(__file__)
     relative_path = "images"
     folderPath = os.path.join(absolute_path, relative_path)
     PathList = os.listdir(folderPath)
 
-    imgList = []
-    individual_ID=[]
-
-    for path in PathList:
-        imgList.append(cv2.imread(os.path.join(folderPath,path)))
-        individual_ID.append(path[:-4])
-        #print(individual_ID)
-
-    #Creating the encodings
-    def findEncodings(imagesList):
-
-        encoded_list = []
-        for img in imagesList:
-            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-            encode = face_recognition.face_encodings(img)[0]
-            encoded_list.append(encode)
-
-        return encoded_list
+    encodeListKnown = []
+    individual_ID = []
 
     print("Encoding Started")
-    encodeListKnown = findEncodings(imgList)
-    encodeListKnown_withID = [encodeListKnown, individual_ID]
+    for path in PathList:
+        img_path = os.path.join(folderPath, path)
+        img = cv2.imread(img_path)
+        if img is not None:
+            # Resize image to a smaller size for faster processing
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            
+            # Try to find face locations first
+            face_locations = face_recognition.face_locations(img, model="hog")
+            
+            if face_locations:
+                # If face found, compute encoding
+                face_encoding = face_recognition.face_encodings(img, face_locations)[0]
+                encodeListKnown.append(face_encoding)
+                individual_ID.append(path[:-4])
+            else:
+                print(f"No faces found in image {path}")
+        else:
+            print(f"Warning: Unable to read image '{path}'.")
+
     print("Encoding Complete")
 
-    file = open(absolute_path + "//" "EncodedFile.p", "wb")
-    pkl.dump(encodeListKnown_withID,file)
-    file.close()
+    encodeListKnown_withID = [encodeListKnown, individual_ID]
+
+    with open(os.path.join(absolute_path, "EncodedFile.p"), "wb") as file:
+        pkl.dump(encodeListKnown_withID, file)
     print("File Saved")
 
+def resize_image(image, target_width, target_height):
+    h, w = image.shape[:2]
+    aspect_ratio = w / h
+    if aspect_ratio > 1:  # Landscape or square image
+        new_width = target_width
+        new_height = int(target_width / aspect_ratio)
+    else:  # Portrait image
+        new_width = int(target_height * aspect_ratio)
+        new_height = target_height
+    
+    # Ensure new dimensions are within the target size
+    new_width = min(new_width, target_width)
+    new_height = min(new_height, target_height)
+    
+    resized_img = cv2.resize(image, (new_width, new_height))
+    
+    # Create a new image with target size and place the resized image in the center
+    new_image = 255 * np.ones((target_height, target_width, 3), dtype=np.uint8)
+    x_offset = (target_width - new_width) // 2
+    y_offset = (target_height - new_height) // 2
+    new_image[y_offset:y_offset + new_height, x_offset:x_offset + new_width] = resized_img
+
+    return new_image
 
 def create_img_file(): #[DONE]
     current_directory = os.path.dirname(os.path.abspath(__file__))
@@ -105,7 +125,8 @@ def create_placeholder_image(filepath):
     image.save(filepath)
 
 def sanitize_filename(name):
-    return re.sub(r'[/\\: ]', '_', name)
+    name = name.replace(' ', '-')
+    return re.sub(r'[/\\:*?"<>|]', '', name)
 
 def download_img(current_directory,images_directory,JSON_FILENAME):
     try:
@@ -127,7 +148,8 @@ def download_img(current_directory,images_directory,JSON_FILENAME):
         worksheet = spreadsheet.worksheet(SHEET_NAME)
         data = worksheet.get_all_records()
         row_count = len(data)
-        print("Available data on Data Base ",row_count)
+        print("--------------------------------------------------")
+        print("Available data on Data Base:",row_count)
 
         current_file_names = set()
         new_images_downloaded = False
@@ -153,10 +175,8 @@ def download_img(current_directory,images_directory,JSON_FILENAME):
                     download_image_from_drive(image_url, images_directory, sanitized_name, sanitized_timestamp)
                     new_images_downloaded = True
                     
-                    # Ask for location only when new data is detected
-
                 else:
-                    print(f"Data exists: '{file_name}'")
+                    print(f"Data exists in local: '{file_name}'")
 
                 image = Image.open(file_path)
                 image = image.convert('RGB')
@@ -166,6 +186,8 @@ def download_img(current_directory,images_directory,JSON_FILENAME):
             else:
                 print("Missing 'Name', 'Guest_Profile_Picture', or 'Timestamp' field in record.")
                 continue
+
+        print("--------------------------------------------------")
 
         if new_images_downloaded:
             return True
