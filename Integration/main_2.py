@@ -38,7 +38,7 @@ BLACK = 0x00
 
 JSON_FILENAME = "sidp-facialrecognition-21f79db4b512"
           
-def face_reg_runtime():
+def face_reg_runtime(event):
     global stop_threads
     global Flag
     frame_count = 0
@@ -72,7 +72,7 @@ def face_reg_runtime():
             break
 
         frame_count += 1
-        if not Flag:
+        if not P_event.is_set():
             
             if frame_count % 20 == 0:
                 imgS = cv2.resize(frame, (0,0), None, 0.25, 0.25)
@@ -94,9 +94,10 @@ def face_reg_runtime():
             cv2.imshow("Face video_capture", frame)
 
         else:
-            while Flag == True:
+            while P_event.is_set() == True:
                 #cv2.imshow("Face video_capture", frame)
                 print("Encoding...")
+                P_event.wait()
             encodeListKnown, individual_ID = load_encoded_file()
             print("Reloaded:", individual_ID)
     
@@ -124,7 +125,7 @@ def lcd_display(name_idx):
         time.sleep(2)
         
 
-def fetching_encoding(current_directory,images_directory,JSON_FILENAME):
+def fetching_encoding(current_directory,images_directory,JSON_FILENAME,P_event):
     print("here 1")
     global stop_threads
     global Flag
@@ -132,15 +133,19 @@ def fetching_encoding(current_directory,images_directory,JSON_FILENAME):
     while not stop_threads: 
         if download_img(current_directory,images_directory,JSON_FILENAME):
             Flag = True
+            P_event.set()
             encoded_file = os.path.join(current_directory, "EncodedFile.p")
             os.remove(encoded_file)
             img_encoder()
+            P_event.set()
             Flag = False
         if remove_deleted_images(current_directory,images_directory,JSON_FILENAME):
             Flag = True
+            P_event.set()
             encoded_file = os.path.join(current_directory, "EncodedFile.p")
             os.remove(encoded_file)
             img_encoder()
+            P_event.set()
             Flag = False
         time.sleep(10)
     return
@@ -148,6 +153,7 @@ def fetching_encoding(current_directory,images_directory,JSON_FILENAME):
 stop_threads = False 
 Flag = False
 # creating  threads
+P_event = multiprocessing.Event()
 if __name__ == '__main__':
     SPI_DEVICE = "/dev/spidev1.0"
     global disp 
@@ -161,8 +167,8 @@ if __name__ == '__main__':
         download_img(current_directory,images_directory,JSON_FILENAME)
         img_encoder()
         
-        p1 = multiprocessing.Process(target=face_reg_runtime) 
-        p2 = multiprocessing.Process(target=fetching_encoding,args=(current_directory,images_directory,JSON_FILENAME,))
+        p1 = multiprocessing.Process(target=face_reg_runtime, args=(P_event,))
+        p2 = multiprocessing.Process(target=fetching_encoding,args=(current_directory,images_directory,JSON_FILENAME,P_event))
 
         p1.start()
         p2.start()
