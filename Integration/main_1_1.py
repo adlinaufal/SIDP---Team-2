@@ -3,18 +3,20 @@ import threading
 import time
 import cv2
 import os
-from oauth2client.service_account import ServiceAccountCredentials
-from Gtrans_enc import img_encoder
 import traceback
 import pickle as pkl
 import face_recognition
-import numpy as np
-from gps_utils import GetGPSData, uart_port
 import platform
-from __funct_2 import img_encoder, download_img, remove_deleted_images
-from lcd_utils import lcd_display, initialize_lcd, CoordinatestoLocation
 import gspread
 import serial
+
+from oauth2client.service_account import ServiceAccountCredentials
+from Gtrans_enc import img_encoder
+from __funct_2 import img_encoder, download_img, remove_deleted_images
+from lcd_utils import lcd_display, initialize_lcd
+from gps_utils import CoordinatestoLocation, uart_port, GetGPSData
+
+import numpy as np
 
 JSON_FILENAME = "sidp-facialrecognition-21f79db4b512"
 
