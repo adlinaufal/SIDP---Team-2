@@ -172,18 +172,13 @@ def download_img(current_directory,images_directory,JSON_FILENAME):
                     image = resize_and_pad(image)
 
                     # Resize to 960x720 (4:3 ratio)
-                    new_image = image.resize((960, 720))
+                    new_image = image.resize((800, 600))
 
                     # Save the processed image
                     new_image.save(file_path)
 
                 else:
                     print(f"Data exists: '{file_name}'")
-
-                image = Image.open(file_path)
-                image = image.convert('RGB')
-                new_image = image.resize((800,600))
-                new_image.save(file_path)
 
             else:
                 print("Missing 'Name', 'Guest_Profile_Picture', or 'Timestamp' field in record.")
