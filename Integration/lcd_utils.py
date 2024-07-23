@@ -17,7 +17,7 @@ def initialize_lcd():
         disp.lcd_init_2inch4()
     return disp
 
-def lcd_display(userId):
+def lcd_display(userId, current_directory):
     global disp
     if disp is None:
         initialize_lcd()
@@ -33,8 +33,9 @@ def lcd_display(userId):
         time.sleep(2)
 
         # Reinitialize the display to ensure the whole screen is cleared
-        disp.lcd_init_2inch4()
-        disp.lcd_clear(BLACK)
+        blackImage = Image.open(os.join.path(current_directory, "image.png"))
+        blackImage = blackImage.resize((320, 240))
+        disp.lcd_ShowImage(blackImage, 0, 0)
 
     except:
         pass
