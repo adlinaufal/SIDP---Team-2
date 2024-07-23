@@ -11,7 +11,7 @@ import face_recognition
 import numpy as np
 from gps_utils import GetGPSData, uart_port
 import platform
-from __funct import img_encoder, download_img, remove_deleted_images
+from __funct_2 import img_encoder, download_img, remove_deleted_images
 from lcd_utils import lcd_display
 import gspread
 import serial
