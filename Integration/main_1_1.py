@@ -12,7 +12,7 @@ import numpy as np
 from gps_utils import GetGPSData, uart_port
 import platform
 from __funct_2 import img_encoder, download_img, remove_deleted_images
-from lcd_utils import lcd_display, initialize_lcd
+from lcd_utils import lcd_display, initialize_lcd, CoordinatestoLocation
 import gspread
 import serial
 
@@ -20,14 +20,14 @@ JSON_FILENAME = "sidp-facialrecognition-21f79db4b512"
 
 # Function to get location from user input
 def get_location():
-    #gps = serial.Serial(uart_port, baudrate=9600, timeout=0.5)
-    #while True:
-    #    latitude, longitude = GetGPSData(gps)
-    #    if latitude is not None and longitude is not None:
-            #latitude = f"{latitude:.6f}"
-            #longitude = f"{longitude:.6f}"
-            #return f"{latitude:.6f}, {longitude:.6f}"
-    return 4.388055, 100.966285, "Not Gate 1 nor Gate 3"
+    gps = serial.Serial(uart_port, baudrate=9600, timeout=0.5)
+    while True:
+        latitude, longitude = GetGPSData(gps)
+        if latitude is not None and longitude is not None:
+            location = CoordinatestoLocation(latitude, longitude)
+            break
+    
+    return latitude, longitude, location
 
 # Function to update the location coordinates in Google Sheets
 def update_location_in_sheet(row_number, location_coord, location, client, spreadsheet_url, sheet_name):
