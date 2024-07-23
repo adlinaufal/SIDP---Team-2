@@ -106,8 +106,8 @@ def face_reg_runtime(stop_event, reload_event, client, spreadsheet_url, sheet_na
                     # Call the lcd_display function to update the display
                     lcd_display(userID)
 
-                    detected_name = userID.split('_')[0].replace('-', ' ')  # Convert hyphens back to spaces
-                    detected_timestamp_id = '_'.join(userID.split('_')[1:])
+                    detected_name = ' '.join(userID.split('_')[:2])  # Convert hyphens back to spaces
+                    detected_timestamp_id = '_'.join(userID.split('_')[2:])
 
                     # Check the spreadsheet for matching name and timestamp_id
                     data = worksheet.get_all_records()  # Consider optimizing this if data doesn't change often
