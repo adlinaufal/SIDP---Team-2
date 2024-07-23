@@ -70,24 +70,28 @@ def GetGPSData(gps):
     if msg_list[GPGGA_dict['msg_id']] == "$GPGGA":
         lat_str = msg_list[GPGGA_dict["latitude"]]
         lon_str = msg_list[GPGGA_dict["longitude"]]
+
         if lat_str and lon_str:
-            lat_len = len(lat_str.split(".")[0])
-            lon_len = len(lon_str.split(".")[0])
-            
-            lat_deg = int(lat_str[:lat_len-2])
-            lat_min = float(lat_str[lat_len-2:])
-            lat_dir = msg_list[GPGGA_dict["NorS"]]
-            
-            lon_deg = int(lon_str[:lon_len-2])
-            lon_min = float(lon_str[lon_len-2:])
-            lon_dir = msg_list[GPGGA_dict["EorW"]]
-            
-            latitude = convert_to_decimal(lat_deg, lat_min, lat_dir)
-            longitude = convert_to_decimal(lon_deg, lon_min, lon_dir)
-            
-            # Save the latitude and longitude to a file
-            with open('gps_data.txt', 'w') as file:
-                file.write(f"Latitude: {latitude}\nLongitude: {longitude}\n")
+            try:
+                # Handle latitude conversion
+                lat_deg = int(lat_str[:2])  # Latitude degrees
+                lat_min = float(lat_str[2:])  # Latitude minutes
+                lat_dir = msg_list[GPGGA_dict["NorS"]]
+
+                # Handle longitude conversion
+                lon_deg = int(lon_str[:3])  # Longitude degrees
+                lon_min = float(lon_str[3:])  # Longitude minutes
+                lon_dir = msg_list[GPGGA_dict["EorW"]]
+                
+                latitude = convert_to_decimal(lat_deg, lat_min, lat_dir)
+                longitude = convert_to_decimal(lon_deg, lon_min, lon_dir)
+                
+                # Save the latitude and longitude to a file
+                with open('gps_data.txt', 'w') as file:
+                    file.write(f"Latitude: {latitude}\nLongitude: {longitude}\n")
+
+            except:
+                return read_gps_data_from_file()
     
     return latitude, longitude
 
