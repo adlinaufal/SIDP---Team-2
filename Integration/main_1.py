@@ -148,7 +148,7 @@ def fetching_encoding(current_directory, images_directory, JSON_FILENAME, stop_e
             os.remove(encoded_file)
             img_encoder()
             reload_event.set()
-        time.sleep(10)
+        time.sleep(30)
     return
 
 if __name__ == '__main__':

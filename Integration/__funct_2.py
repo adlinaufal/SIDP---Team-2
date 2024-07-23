@@ -10,6 +10,34 @@ from Gtrans_enc import img_encoder  # Assuming transmission_encodegen.py contain
 from PIL import Image, ImageDraw, ImageFont  # PIL library for creating placeholder images
 import traceback
 
+import cv2
+import face_recognition
+import pickle as pkl
+import os
+from PIL import Image, ExifTags
+
+def correct_image_orientation(image_path):
+    try:
+        image = Image.open(image_path)
+        for orientation in ExifTags.TAGS.keys():
+            if ExifTags.TAGS[orientation] == 'Orientation':
+                break
+
+        exif = image._getexif()
+        if exif is not None:
+            orientation = exif.get(orientation)
+            if orientation == 3:
+                image = image.rotate(180, expand=True)
+            elif orientation == 6:
+                image = image.rotate(270, expand=True)
+            elif orientation == 8:
+                image = image.rotate(90, expand=True)
+
+        return image
+    except (AttributeError, KeyError, IndexError):
+        # Cases: image don't have getexif
+        return Image.open(image_path)
+
 def img_encoder():
     # Importing images
     absolute_path = os.path.dirname(__file__)
@@ -21,12 +49,17 @@ def img_encoder():
     individual_ID = []
 
     for path in PathList:
-        img = cv2.imread(os.path.join(folderPath, path))
+        image_path = os.path.join(folderPath, path)
+        # Correct the orientation of the image
+        pil_img = correct_image_orientation(image_path)
+        img = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
+        
         # Ensure the image is resized to a 4:3 ratio if it's not already
         height, width, _ = img.shape
         if width / height != 4/3:
             new_width = int(height * 4 / 3)
             img = cv2.resize(img, (new_width, height))
+        
         imgList.append(img)
         individual_ID.append(path[:-4])
 
@@ -52,7 +85,6 @@ def img_encoder():
     with open(os.path.join(absolute_path, "EncodedFile.p"), "wb") as file:
         pkl.dump(encodeListKnown_withID, file)
     print("File Saved")
-
 
 def create_img_file(): #[DONE]
     current_directory = os.path.dirname(os.path.abspath(__file__))
