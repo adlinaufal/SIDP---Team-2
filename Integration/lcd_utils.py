@@ -17,7 +17,7 @@ def initialize_lcd():
         disp.lcd_init_2inch4()
     return disp
 
-def lcd_display(userId, current_directory):
+def lcd_display(userId):
     global disp
     if disp is None:
         initialize_lcd()
