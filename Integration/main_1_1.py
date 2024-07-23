@@ -27,12 +27,11 @@ def get_location():
             #latitude = f"{latitude:.6f}"
             #longitude = f"{longitude:.6f}"
             #return f"{latitude:.6f}, {longitude:.6f}"
-    return 4.382456, 119.123123, "Not Gate 1 nor Gate 3"
+    return 4.388055, 100.966285, "Not Gate 1 nor Gate 3"
 
 # Function to update the location coordinates in Google Sheets
 def update_location_in_sheet(row_number, location_coord, location, client, spreadsheet_url, sheet_name):
     try:
-        print(f"Row number: {row_number}")
         print(f"Location coordinate: {location_coord}")
         spreadsheet = client.open_by_url(spreadsheet_url)
         worksheet = spreadsheet.worksheet(sheet_name)
@@ -41,7 +40,6 @@ def update_location_in_sheet(row_number, location_coord, location, client, sprea
         worksheet.update_cell(row_number, worksheet.find('Location').col, location)
         worksheet.update_cell(row_number, worksheet.find('Status').col, "Checked-in")
         end_time = time.time()
-        print(f"Updated location in row {row_number}: {location_coord} {location}")
         print(f"Time taken to update location: {end_time - start_time} seconds")
         return True
     except Exception as e:
@@ -100,6 +98,7 @@ def face_reg_runtime(stop_event, reload_event, client, spreadsheet_url, sheet_na
 
                 matchIndex = np.argmin(faceDis)
                 if matches[matchIndex]:
+                    print("--------------------------------------------------")
                     userID = individual_ID[matchIndex]
                     print(userID)
 
@@ -113,9 +112,7 @@ def face_reg_runtime(stop_event, reload_event, client, spreadsheet_url, sheet_na
                     data = worksheet.get_all_records()  # Consider optimizing this if data doesn't change often
 
                     for index, row in enumerate(data, start=2):  # start=2 because row 1 is headers
-                        print("row: ", row['Name'], row['timestamp_id'])
-                        print("detected: ", detected_name, detected_timestamp_id)
-                        if row['Name'] == detected_name and row['timestamp_id'] == detected_timestamp_id:
+                        if row['Name'] == detected_name and str(row['timestamp_id']) == detected_timestamp_id:
                             name = row['Name']
                             timestamp_id = row['timestamp_id']
                             current_status = row['Status']
@@ -128,10 +125,12 @@ def face_reg_runtime(stop_event, reload_event, client, spreadsheet_url, sheet_na
 
                                 threading.Thread(target=update_location_in_sheet, args=(index, location_coord, location, client, spreadsheet_url, sheet_name)).start()
                             else:
-                                print(f"Our records indicate this visitor has {current_status} previously. Their last recorded location was at {current_location}.")
+                                print(f"Our records indicate this visitor has {current_status} previously. Their last recorded location was at {current_location}, ({location}).")
                             break
                         else:
                             print(f"{detected_name} is not found in database. Please register again.")
+
+                    print("--------------------------------------------------")
 
         cv2.imshow("Face video_capture", frame)
 
