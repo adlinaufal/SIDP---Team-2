@@ -113,6 +113,8 @@ def face_reg_runtime(stop_event, reload_event, client, spreadsheet_url, sheet_na
                     data = worksheet.get_all_records()  # Consider optimizing this if data doesn't change often
 
                     for index, row in enumerate(data, start=2):  # start=2 because row 1 is headers
+                        print("row: ", row['Name'], row['timestamp_id'])
+                        print("detected: ", detected_name, detected_timestamp_id)
                         if row['Name'] == detected_name and row['timestamp_id'] == detected_timestamp_id:
                             name = row['Name']
                             timestamp_id = row['timestamp_id']
