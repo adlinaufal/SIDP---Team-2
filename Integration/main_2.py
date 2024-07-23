@@ -98,8 +98,8 @@ def face_reg_runtime(event):
                 #cv2.imshow("Face video_capture", frame)
                 print("Encoding...")
                 P_event.wait()
-            encodeListKnown, individual_ID = load_encoded_file()
-            print("Reloaded:", individual_ID)
+                encodeListKnown, individual_ID = load_encoded_file()
+                print("Reloaded:", individual_ID)
     
 def lcd_display(name_idx):
     global stop_threads
