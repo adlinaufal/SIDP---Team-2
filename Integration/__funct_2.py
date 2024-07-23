@@ -119,32 +119,29 @@ def create_placeholder_image(filepath):
 def sanitize_filename(name):
     return re.sub(r'[/\\: ]', '_', name)
 
-def download_img(current_directory,images_directory,JSON_FILENAME):
+def download_img(current_directory, images_directory, JSON_FILENAME):
     try:
-        SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1bqCo5PmQVNV7ix_kQarfSCTYC72P1c-qvrmTcu_Xb4E/edit?usp=sharing'  # Your Google Spreadsheet URL
-        SHEET_NAME = 'Form Responses 1'  # Name of the specific sheet within your Google Spreadsheet
+        SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1bqCo5PmQVNV7ix_kQarfSCTYC72P1c-qvrmTcu_Xb4E/edit?usp=sharing'
+        SHEET_NAME = 'Form Responses 1'
 
-        #current_directory = os.path.dirname(os.path.abspath(__file__))#[done1]
-        SERVICE_ACCOUNT_FILE = os.path.join(current_directory, JSON_FILENAME+'.json')
+        SERVICE_ACCOUNT_FILE = os.path.join(current_directory, JSON_FILENAME + '.json')
 
         scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
         creds = ServiceAccountCredentials.from_json_keyfile_name(SERVICE_ACCOUNT_FILE, scope)
         client = gspread.authorize(creds)
 
-        #images_directory = os.path.join(current_directory, 'images')#[done1]
-        if not os.path.exists(images_directory):#[done1]
-            os.makedirs(images_directory)#[done1]
+        if not os.path.exists(images_directory):
+            os.makedirs(images_directory)
 
         spreadsheet = client.open_by_url(SPREADSHEET_URL)
         worksheet = spreadsheet.worksheet(SHEET_NAME)
         data = worksheet.get_all_records()
         row_count = len(data)
-        print("Available data on Data Base ",row_count)
+        print("Available data on Data Base ", row_count)
 
         current_file_names = set()
         new_images_downloaded = False
 
-        # Get the index of the "Location_coordinate" column, create it if it doesn't exist
         headers = worksheet.row_values(1)
         for index, item in enumerate(data, start=2):
             if 'Name' in item and 'Guest_Profile_Picture' in item and 'Timestamp' in item:
@@ -158,27 +155,19 @@ def download_img(current_directory,images_directory,JSON_FILENAME):
                 file_path = os.path.join(images_directory, file_name)
                 current_file_names.add(file_name)
                 
-                # Update the Google Sheet with the sanitized timestamp in 'timestamp_id' column
                 worksheet.update_cell(index, worksheet.find('timestamp_id').col, sanitized_timestamp)
 
                 if not os.path.exists(file_path):
                     download_image_from_drive(image_url, images_directory, sanitized_name, sanitized_timestamp)
                     new_images_downloaded = True
-                    
-                    # Open the image and convert it to RGB
-                    image = Image.open(file_path).convert('RGB')
 
-                    # Resize and pad the image to 4:3 ratio
-                    image = resize_and_pad(image)
+                # Process the image (both newly downloaded and existing ones)
+                image = Image.open(file_path).convert('RGB')
+                image = resize_and_pad(image)
+                new_image = image.resize((920, 720))
+                new_image.save(file_path)
 
-                    # Resize to 960x720 (4:3 ratio)
-                    new_image = image.resize((800, 600))
-
-                    # Save the processed image
-                    new_image.save(file_path)
-
-                else:
-                    print(f"Data exists: '{file_name}'")
+                print(f"Processed and saved image: '{file_name}'")
 
             else:
                 print("Missing 'Name', 'Guest_Profile_Picture', or 'Timestamp' field in record.")
@@ -191,6 +180,7 @@ def download_img(current_directory,images_directory,JSON_FILENAME):
         print("Process interrupted by user.")
     except Exception as e:
         print("An error occurred:", e)
+        print(traceback.format_exc())
 
 def remove_deleted_images(current_directory,images_directory,JSON_FILENAME):
     SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1bqCo5PmQVNV7ix_kQarfSCTYC72P1c-qvrmTcu_Xb4E/edit?usp=sharing'  # Your Google Spreadsheet URL
