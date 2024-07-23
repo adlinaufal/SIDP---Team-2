@@ -7,14 +7,9 @@ import requests
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from Gtrans_enc import img_encoder  # Assuming transmission_encodegen.py contains img_encoder function
-from PIL import Image, ImageDraw, ImageFont  # PIL library for creating placeholder images
+from PIL import Image, ImageDraw, ImageFont, ExifTags  # PIL library for creating placeholder images
 import traceback
-
-import cv2
-import face_recognition
-import pickle as pkl
-import os
-from PIL import Image, ExifTags
+import numpy as np
 
 def correct_image_orientation(image_path):
     try:
@@ -35,8 +30,29 @@ def correct_image_orientation(image_path):
 
         return image
     except (AttributeError, KeyError, IndexError):
-        # Cases: image don't have getexif
+        # Cases: image doesn't have getexif
         return Image.open(image_path)
+
+def add_padding_to_aspect_ratio(image, target_aspect_ratio=(4, 3)):
+    target_ratio = target_aspect_ratio[0] / target_aspect_ratio[1]
+    height, width = image.shape[:2]
+    current_ratio = width / height
+
+    if current_ratio > target_ratio:
+        new_width = width
+        new_height = int(width / target_ratio)
+    else:
+        new_height = height
+        new_width = int(height * target_ratio)
+
+    delta_w = new_width - width
+    delta_h = new_height - height
+    top, bottom = delta_h // 2, delta_h - (delta_h // 2)
+    left, right = delta_w // 2, delta_w - (delta_w // 2)
+
+    color = [0, 0, 0]
+    new_image = cv2.copyMakeBorder(image, top, bottom, left, right, cv2.BORDER_CONSTANT, value=color)
+    return new_image
 
 def img_encoder():
     # Importing images
@@ -54,11 +70,8 @@ def img_encoder():
         pil_img = correct_image_orientation(image_path)
         img = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
         
-        # Ensure the image is resized to a 4:3 ratio if it's not already
-        height, width, _ = img.shape
-        if width / height != 4/3:
-            new_width = int(height * 4 / 3)
-            img = cv2.resize(img, (new_width, height))
+        # Ensure the image has a 4:3 aspect ratio by adding padding
+        img = add_padding_to_aspect_ratio(img)
         
         imgList.append(img)
         individual_ID.append(path[:-4])
