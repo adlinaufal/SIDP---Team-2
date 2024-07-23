@@ -94,7 +94,7 @@ def face_reg_runtime(event):
             cv2.imshow("Face video_capture", frame)
 
         else:
-            while P_event.is_set() == True:
+            if P_event.is_set():
                 #cv2.imshow("Face video_capture", frame)
                 print("Encoding...")
                 P_event.wait()
@@ -137,7 +137,7 @@ def fetching_encoding(current_directory,images_directory,JSON_FILENAME,P_event):
             encoded_file = os.path.join(current_directory, "EncodedFile.p")
             os.remove(encoded_file)
             img_encoder()
-            P_event.set()
+            P_event.clear()
             Flag = False
         if remove_deleted_images(current_directory,images_directory,JSON_FILENAME):
             Flag = True
@@ -145,7 +145,7 @@ def fetching_encoding(current_directory,images_directory,JSON_FILENAME,P_event):
             encoded_file = os.path.join(current_directory, "EncodedFile.p")
             os.remove(encoded_file)
             img_encoder()
-            P_event.set()
+            P_event.clear()
             Flag = False
         time.sleep(10)
     return
