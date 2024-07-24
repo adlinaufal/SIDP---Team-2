@@ -15,12 +15,11 @@ import numpy as np
 
 
 def fail_encoding(path, e):
-    print(e, path)
+    print(e)
 
     name, timestamp_id = path[:-4].split('_')
-
     name = name.replace('-', ' ')
-    data = worksheet.get_all_values()
+    data = worksheet.get_all_records()
 
     for index, row in enumerate(data, start=2):
         if row['Name'] == name and str(row['timestamp_id']) == timestamp_id:
