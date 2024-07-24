@@ -11,7 +11,7 @@ import gspread
 import serial
 
 from oauth2client.service_account import ServiceAccountCredentials
-from __funct import img_encoder, download_img, remove_deleted_images
+from __funct_2 import img_encoder, download_img, remove_deleted_images
 from lcd_utils import lcd_display, initialize_lcd
 from gps_utils import CoordinatestoLocation, uart_port, GetGPSData
 
@@ -145,7 +145,7 @@ def face_reg_runtime(stop_event, reload_event, client, spreadsheet_url, sheet_na
 
 def fetching_encoding(current_directory, images_directory, JSON_FILENAME, stop_event, reload_event):
     while not stop_event.is_set(): 
-        if download_img(current_directory, images_directory, JSON_FILENAME) or remove_deleted_images(current_directory, images_directory, JSON_FILENAME):
+        if download_img(current_directory, images_directory, JSON_FILENAME) or remove_deleted_images(images_directory):
             encoded_file = os.path.join(current_directory, "EncodedFile.p")
             os.remove(encoded_file)
             img_encoder()

@@ -8,7 +8,6 @@ import gspread
 import traceback
 
 from oauth2client.service_account import ServiceAccountCredentials
-from Gtrans_enc import img_encoder  # Assuming transmission_encodegen.py contains img_encoder function
 from PIL import Image, ImageDraw, ImageFont  # PIL library for creating placeholder images
 
 import numpy as np
