@@ -9,6 +9,7 @@ BLACK = 0x00
 # Create a global instance for the LCD display
 disp = None
 
+# Function to initialize the LCD display
 def initialize_lcd():
     global disp
     if disp is None:
@@ -17,6 +18,7 @@ def initialize_lcd():
         disp.lcd_init_2inch4()
     return disp
 
+# Function to display the image on the LCD based on userID
 def lcd_display(userId):
     global disp
     if disp is None:

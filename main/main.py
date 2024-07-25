@@ -14,11 +14,10 @@ from oauth2client.service_account import ServiceAccountCredentials
 from __funct import img_encoder, download_img, remove_deleted_images
 from lcd_utils import lcd_display, initialize_lcd
 from gps_utils import CoordinatestoLocation, uart_port, GetGPSData
-from dotenv import load_dotenv
+from key import SPREADSHEET_URL, SHEET_NAME, JSON_FILENAME, SCOPE
 
 import numpy as np
 
-load_dotenv()
 
 # Function to get location from user input
 def get_location():
@@ -143,9 +142,9 @@ def face_reg_runtime(stop_event, reload_event, client, spreadsheet_url, sheet_na
             reload_event.clear()
 
 # Function to fetch images for encoding purpose
-def fetching_encoding(current_directory, images_directory, JSON_FILENAME, SPREADSHEET_URL, SHEET_NAME, scope, stop_event, reload_event):
+def fetching_encoding(current_directory, images_directory, JSON_FILENAME, SPREADSHEET_URL, SHEET_NAME, SCOPE, stop_event, reload_event):
     while not stop_event.is_set(): 
-        if download_img(current_directory, images_directory, JSON_FILENAME, SPREADSHEET_URL, SHEET_NAME, scope) or remove_deleted_images(images_directory):
+        if download_img(current_directory, images_directory, JSON_FILENAME, SPREADSHEET_URL, SHEET_NAME, SCOPE) or remove_deleted_images(images_directory):
             encoded_file = os.path.join(current_directory, "EncodedFile.p")
             os.remove(encoded_file)
             img_encoder()
@@ -158,15 +157,10 @@ if __name__ == '__main__':
     current_directory = os.path.dirname(os.path.abspath(__file__))
     images_directory = os.path.join(current_directory, 'images')
 
-    SPREADSHEET_URL = os.getenv('SPREADSHEET_URL')
-    SHEET_NAME = os.getenv('SHEET_NAME')
-
     current_directory = os.path.dirname(os.path.abspath(__file__))
-    JSON_FILENAME = os.getenv('JSON_FILENAME')
     SERVICE_ACCOUNT_FILE = os.path.join(current_directory, JSON_FILENAME + '.json')
     
-    scope = os.getenv('SCOPE')
-    creds = ServiceAccountCredentials.from_json_keyfile_name(SERVICE_ACCOUNT_FILE, scope)
+    creds = ServiceAccountCredentials.from_json_keyfile_name(SERVICE_ACCOUNT_FILE, SCOPE)
     client = gspread.authorize(creds)    
 
     stop_event = multiprocessing.Event()
@@ -177,7 +171,7 @@ if __name__ == '__main__':
         img_encoder()
         
         p1 = multiprocessing.Process(target=face_reg_runtime, args=(stop_event, reload_event, client, SPREADSHEET_URL, SHEET_NAME)) 
-        p2 = multiprocessing.Process(target=fetching_encoding, args=(current_directory, images_directory, JSON_FILENAME, SPREADSHEET_URL, SHEET_NAME, scope, stop_event, reload_event))
+        p2 = multiprocessing.Process(target=fetching_encoding, args=(current_directory, images_directory, JSON_FILENAME, SPREADSHEET_URL, SHEET_NAME, SCOPE, stop_event, reload_event))
 
         p1.start()
         p2.start()
