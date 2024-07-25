@@ -31,59 +31,91 @@ GPGGA_dict = {
 
 uart_port = "/dev/ttyS0"
 
+# Function to convert GPS coordinates to decimal
 def convert_to_decimal(degrees, minutes, direction):
     decimal = degrees + minutes / 60
     if direction in ['S', 'W']:
         decimal = -decimal
     return decimal
 
-def GetGPSData(gps):    
+# Function to retireve GPS data
+def GetGPSData(gps):
     NumberofRetries = 0
     RetriesLimit = 5
 
     while NumberofRetries < RetriesLimit:
         try:
             data = gps.readline()
-            msg_str = str(data, encoding="utf-8")
-            break
-        except Exception:
+            msg_str = str(data, encoding="utf-8").strip()
+            if msg_str:
+                break
+        except Exception as e:
             NumberofRetries += 1
             time.sleep(1)
-    
-    if NumberofRetries == RetriesLimit:
-        return 4.382462, 100.968246
-    
+    else:
+        print("An error occurred while reading GPS data!")
+        print("Returning last value of GPS data...")
+        return read_gps_data_from_file()
+
+    # Split the message into components
     msg_list = msg_str.split(",")
 
     latitude = None
     longitude = None
 
+    # Check for GPS data validity
     if msg_list[GPGSA_dict['msg_id']] == "$GPGSA":
         print()
         if msg_list[GPGSA_dict['mode2']] == "1":
             print("!!!!!!GPS Device is not ONLINE!!!!!!")
-            return None, None
+            print("Returning last value of GPS data...")
+            return read_gps_data_from_file()
 
     if msg_list[GPGGA_dict['msg_id']] == "$GPGGA":
         lat_str = msg_list[GPGGA_dict["latitude"]]
         lon_str = msg_list[GPGGA_dict["longitude"]]
+
         if lat_str and lon_str:
-            lat_len = len(lat_str.split(".")[0])
-            lon_len = len(lon_str.split(".")[0])
-            
-            lat_deg = int(lat_str[:lat_len-2])
-            lat_min = float(lat_str[lat_len-2:])
-            lat_dir = msg_list[GPGGA_dict["NorS"]]
-            
-            lon_deg = int(lon_str[:lon_len-2])
-            lon_min = float(lon_str[lon_len-2:])
-            lon_dir = msg_list[GPGGA_dict["EorW"]]
-            
-            latitude = convert_to_decimal(lat_deg, lat_min, lat_dir)
-            longitude = convert_to_decimal(lon_deg, lon_min, lon_dir)
+            try:
+                # Handle latitude conversion
+                lat_deg = int(lat_str[:2])  # Latitude degrees
+                lat_min = float(lat_str[2:])  # Latitude minutes
+                lat_dir = msg_list[GPGGA_dict["NorS"]]
+
+                # Handle longitude conversion
+                lon_deg = int(lon_str[:3])  # Longitude degrees
+                lon_min = float(lon_str[3:])  # Longitude minutes
+                lon_dir = msg_list[GPGGA_dict["EorW"]]
+                
+                latitude = convert_to_decimal(lat_deg, lat_min, lat_dir)
+                longitude = convert_to_decimal(lon_deg, lon_min, lon_dir)
+                
+                # Save the latitude and longitude to a file
+                with open('gps_data.txt', 'w') as file:
+                    file.write(f"Latitude: {latitude}\nLongitude: {longitude}\n")
+
+            except:
+                print("An error occured while reading GPS data!")
+                print("Returning last value of GPS data...")
+                return read_gps_data_from_file()
     
     return latitude, longitude
 
+# Function to read GPS data from file
+def read_gps_data_from_file(filename='gps_data.txt'):
+    try:
+        with open(filename, 'r') as file:
+            lines = file.readlines()
+            latitude_line = lines[0].strip()
+            longitude_line = lines[1].strip()
+            latitude = float(latitude_line.split(': ')[1])
+            longitude = float(longitude_line.split(': ')[1])
+            return latitude, longitude
+    except (FileNotFoundError, IndexError, ValueError) as e:
+        print(f"Error reading GPS data from file: {e}")
+        return None, None
+        
+# Function to convert coordinates to location
 def CoordinatestoLocation(latitude, longitude):
     location = None
     if 4.385422 < latitude < 4.385959 and 100.979104 < longitude < 100.979822:
