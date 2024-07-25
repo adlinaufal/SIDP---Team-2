@@ -167,7 +167,7 @@ if __name__ == '__main__':
     reload_event = multiprocessing.Event()
 
     try:
-        download_img(current_directory, images_directory, JSON_FILENAME)
+        download_img(current_directory, images_directory, JSON_FILENAME, SPREADSHEET_URL, SHEET_NAME, SCOPE)
         img_encoder()
         
         p1 = multiprocessing.Process(target=face_reg_runtime, args=(stop_event, reload_event, client, SPREADSHEET_URL, SHEET_NAME)) 
