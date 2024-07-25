@@ -7,7 +7,7 @@ import platform
 import time
 import threading
 from __funct import img_encoder,download_img,remove_deleted_images
-JSON_FILENAME = "sidp-facialrecognition-21f79db4b512"
+JSON_FILENAME = ""
 stop_threads = False
 flag = False
 def face_rec():

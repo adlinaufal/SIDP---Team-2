@@ -36,7 +36,7 @@ import LCD2inch4_lib
 WHITE = 0xFF
 BLACK = 0x00
 
-JSON_FILENAME = "sidp-facialrecognition-21f79db4b512"
+JSON_FILENAME = ""
           
 def face_reg_runtime(event):
     global stop_threads

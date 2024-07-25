@@ -183,14 +183,14 @@ def face_rec(client, spreadsheet_url, sheet_name):
 # Main function to fetch data and encode images
 def fetch_encode():
     try:
-        SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1bqCo5PmQVNV7ix_kQarfSCTYC72P1c-qvrmTcu_Xb4E/edit?usp=sharing'
-        SHEET_NAME = 'Form Responses 1'
+        SPREADSHEET_URL = ''
+        SHEET_NAME = ''
 
         current_directory = os.path.dirname(os.path.abspath(__file__))
         JSON_FILENAME = ""
         SERVICE_ACCOUNT_FILE = os.path.join(current_directory, JSON_FILENAME + '.json')
 
-        scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
+        scope = []
         creds = ServiceAccountCredentials.from_json_keyfile_name(SERVICE_ACCOUNT_FILE, scope)
         client = gspread.authorize(creds)
 

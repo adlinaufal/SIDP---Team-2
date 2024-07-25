@@ -62,14 +62,14 @@ def sanitize_filename(name):
 def fetch_encode():
     try:
         # Replace with your Google Sheets configuration
-        SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1bqCo5PmQVNV7ix_kQarfSCTYC72P1c-qvrmTcu_Xb4E/edit?usp=sharing'  # Your Google Spreadsheet URL
+        SPREADSHEET_URL = ''  # Your Google Spreadsheet URL
         SHEET_NAME = 'Form Responses 1'  # Name of the specific sheet within your Google Spreadsheet
 
         # Replace with the path to your service account JSON file
-        SERVICE_ACCOUNT_FILE = r'C:\Users\ndytl\Desktop\SIDP\SIDP---Team-2\Transmission\sidp-facialrecognition-97936b0850c8.json'  # Path to your service account JSON file
+        SERVICE_ACCOUNT_FILE = ''  # Path to your service account JSON file
 
         # Authenticate with Google Sheets using service account credentials
-        scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
+        scope = []
         creds = ServiceAccountCredentials.from_json_keyfile_name(SERVICE_ACCOUNT_FILE, scope)
         client = gspread.authorize(creds)
 

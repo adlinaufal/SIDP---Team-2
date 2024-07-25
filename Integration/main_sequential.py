@@ -6,7 +6,7 @@ import os
 import platform
 import time
 from __funct import img_encoder,download_img,remove_deleted_images
-JSON_FILENAME = "sidp-facialrecognition-21f79db4b512"
+JSON_FILENAME = ""
 def face_rec():
 
     if download_img(current_directory,images_directory,JSON_FILENAME):
